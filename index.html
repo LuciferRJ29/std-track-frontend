@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STD Track — Global Multi-Modal Live Telemetry Radar</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            radar: {
+              bg: '#0a0f1d',
+              card: '#111827',
+              border: '#1f2937',
+              accent: '#38bdf8',
+              flight: '#38bdf8',
+              train: '#10b981',
+              ship: '#f97316',
+              bus: '#a855f7',
+              car: '#eab308'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    .leaflet-container {
+      background-color: #070b14 !important;
+      font-family: inherit;
+    }
+    .leaflet-bar a {
+      background-color: #111827 !important;
+      color: #94a3b8 !important;
+      border-color: #1f2937 !important;
+    }
+    .leaflet-bar a:hover {
+      background-color: #1e293b !important;
+      color: #38bdf8 !important;
+    }
+    .radar-grid {
+      background-image: 
+        radial-gradient(circle at center, rgba(56, 189, 248, 0.05) 0%, transparent 70%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+      pointer-events: none;
+    }
+    .vehicle-marker-icon {
+      transition: transform 0.4s linear;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-[#080d1a] text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans select-none">
+
+  <!-- Top Nav Bar -->
+  <header class="h-16 bg-[#0f172a]/95 backdrop-blur-md border-b border-slate-800 px-4 flex items-center justify-between z-30 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 shadow-lg shadow-sky-500/20">
+        <i data-lucide="radar" class="w-5 h-5 text-white animate-spin" style="animation-duration: 8s;"></i>
+        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+        </span>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-sky-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
+            STD TRACK
+          </h1>
+          <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-sky-950/80 border border-sky-800/60 text-sky-400">
+            PRO LIVE
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 flex items-center gap-1.5">
+          <span id="backendStatusDot" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span id="backendStatusText">Global Telemetry Matrix</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Center Search & Filter -->
+    <div class="flex-1 max-w-xl mx-6 hidden md:block">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+        <input 
+          id="searchInput"
+          type="text" 
+          placeholder="Search flight (AI-161), train (12002), ship (EVER GIVEN), bus or car..."
+          class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-10 pr-24 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all shadow-inner"
+        />
+        <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+          <span class="text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">ESC clear</span>
+        </div>
+        <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto z-50"></div>
+      </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Connect Heroku Backend Button -->
+      <button 
+        id="btnConfigBackend"
+        title="Configure Heroku / Render WebSocket Backend URL"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-all">
+        <i data-lucide="server" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <span class="hidden sm:inline">Backend WS</span>
+      </button>
+
+      <!-- Live OpenSky Toggle -->
+      <button 
+        id="btnOpenSky"
+        title="Fetch real live flights from OpenSky Network API"
+        class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-sky-300 transition-all">
+        <i data-lucide="satellite" class="w-3.5 h-3.5 text-sky-400"></i>
+        <span>OpenSky ADS-B</span>
+      </button>
+
+      <!-- Center Global Reset -->
+      <button 
+        id="btnResetView" 
+        title="Reset map view"
+        class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all">
+        <i data-lucide="globe-2" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Sound Toggle -->
+      <button 
+        id="btnAudio" 
+        title="Toggle audio sonar feedback"
+        class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all">
+        <i data-lucide="volume-2" id="audioIcon" class="w-4 h-4 text-emerald-400"></i>
+      </button>
+
+      <!-- Time Clock -->
+      <div class="text-right hidden sm:block pl-2 border-l border-slate-800">
+        <div id="utcClock" class="font-mono text-xs font-semibold text-slate-200">00:00:00 UTC</div>
+        <div class="text-[10px] font-mono text-emerald-400 flex items-center justify-end gap-1">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+          REALTIME
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Category Filter Bar -->
+  <div class="bg-slate-900/90 border-b border-slate-800/80 px-4 py-2 flex items-center justify-between gap-2 overflow-x-auto z-20 text-xs text-slate-300">
+    <div class="flex items-center gap-2 shrink-0">
+      <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+        <i data-lucide="layers" class="w-3.5 h-3.5"></i> Feeds:
+      </span>
+
+      <button data-category="flight" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-sky-500/40 bg-sky-950/60 text-sky-300 hover:bg-sky-900/60 transition-all">
+        <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+        <i data-lucide="plane" class="w-3.5 h-3.5"></i>
+        <span>Airplanes</span>
+        <span id="badgeFlight" class="font-mono text-[10px] bg-sky-900 px-1.5 py-0.2 rounded-full text-sky-200">0</span>
+      </button>
+
+      <button data-category="train" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/40 bg-emerald-950/60 text-emerald-300 hover:bg-emerald-900/60 transition-all">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <i data-lucide="train" class="w-3.5 h-3.5"></i>
+        <span>Trains</span>
+        <span id="badgeTrain" class="font-mono text-[10px] bg-emerald-900 px-1.5 py-0.2 rounded-full text-emerald-200">0</span>
+      </button>
+
+      <button data-category="ship" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-orange-500/40 bg-orange-950/60 text-orange-300 hover:bg-orange-900/60 transition-all">
+        <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+        <i data-lucide="ship" class="w-3.5 h-3.5"></i>
+        <span>Ships</span>
+        <span id="badgeShip" class="font-mono text-[10px] bg-orange-900 px-1.5 py-0.2 rounded-full text-orange-200">0</span>
+      </button>
+
+      <button data-category="bus" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-purple-500/40 bg-purple-950/60 text-purple-300 hover:bg-purple-900/60 transition-all">
+        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+        <i data-lucide="bus" class="w-3.5 h-3.5"></i>
+        <span>Buses</span>
+        <span id="badgeBus" class="font-mono text-[10px] bg-purple-900 px-1.5 py-0.2 rounded-full text-purple-200">0</span>
+      </button>
+
+      <button data-category="car" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-yellow-500/40 bg-yellow-950/60 text-yellow-300 hover:bg-yellow-900/60 transition-all">
+        <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+        <i data-lucide="car" class="w-3.5 h-3.5"></i>
+        <span>Cars & Fleet</span>
+        <span id="badgeCar" class="font-mono text-[10px] bg-yellow-900 px-1.5 py-0.2 rounded-full text-yellow-200">0</span>
+      </button>
+    </div>
+
+    <div class="hidden xl:flex items-center gap-4 text-xs font-mono text-slate-400 shrink-0">
+      <span class="flex items-center gap-1">
+        <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-400"></i>
+        Stream: <span id="streamSourceLabel" class="text-slate-200">Local Telemetry Engine</span>
+      </span>
+      <span class="flex items-center gap-1">
+        <i data-lucide="cpu" class="w-3.5 h-3.5 text-sky-400"></i>
+        Tracked: <span id="totalActiveCount" class="text-emerald-400 font-bold">0</span> vehicles
+      </span>
+    </div>
+  </div>
+
+  <!-- Main View Area -->
+  <div class="relative flex-1 w-full h-full overflow-hidden">
+    <div id="map" class="w-full h-full z-0"></div>
+    <div class="radar-grid absolute inset-0 z-10 pointer-events-none"></div>
+
+    <!-- Active Vehicle Inspector Drawer -->
+    <div id="inspectorDrawer" class="hidden absolute top-4 left-4 z-20 w-84 sm:w-96 max-h-[calc(100vh-140px)] bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300">
+      <div id="drawerHeaderBg" class="p-4 bg-gradient-to-r from-sky-950/80 to-slate-900 border-b border-slate-800 flex items-start justify-between">
+        <div class="flex items-center gap-3">
+          <div id="drawerIconWrapper" class="p-2.5 rounded-xl bg-sky-900/50 border border-sky-500/30 text-sky-400">
+            <i id="drawerCategoryIcon" data-lucide="plane" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="drawerCallsign" class="text-base font-bold font-mono text-white tracking-wide">AI-161</span>
+              <span id="drawerBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-800/80 text-sky-200 uppercase font-semibold">AIR</span>
+            </div>
+            <div id="drawerOperator" class="text-xs text-slate-300 font-medium">Air India Express</div>
+          </div>
+        </div>
+        <button id="btnCloseDrawer" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-4 overflow-y-auto text-xs">
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
+          <div class="flex items-center justify-between text-slate-300 font-mono text-xs mb-1.5">
+            <div>
+              <div id="drawerOriginCode" class="font-bold text-sm text-sky-400">DEL</div>
+              <div id="drawerOriginCity" class="text-[10px] text-slate-400">New Delhi</div>
+            </div>
+            <div class="flex flex-col items-center flex-1 px-4">
+              <i id="drawerRouteIcon" data-lucide="arrow-right" class="w-4 h-4 text-slate-500"></i>
+              <div class="w-full h-1 bg-slate-700 rounded-full mt-1 overflow-hidden">
+                <div id="drawerProgressBar" class="h-full bg-sky-400 rounded-full" style="width: 58%"></div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div id="drawerDestCode" class="font-bold text-sm text-sky-400">BOM</div>
+              <div id="drawerDestCity" class="text-[10px] text-slate-400">Mumbai</div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-700/50">
+            <span>Status: <strong id="drawerStatusText" class="text-emerald-400">Cruising On Time</strong></span>
+            <span>ETA: <strong id="drawerETA" class="text-slate-200">18:45 UTC</strong></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="gauge" class="w-3 h-3 text-sky-400"></i> Speed
+            </div>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span id="drawerSpeed" class="text-lg font-bold font-mono text-white">840</span>
+              <span id="drawerSpeedUnit" class="text-xs text-slate-400">km/h</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="trending-up" class="w-3 h-3 text-emerald-400"></i> Altitude
+            </div>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span id="drawerAltitude" class="text-lg font-bold font-mono text-white">36,000</span>
+              <span id="drawerAltitudeUnit" class="text-xs text-slate-400">ft</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="compass" class="w-3 h-3 text-amber-400"></i> Heading
+            </div>
+            <div class="mt-1 flex items-center gap-2">
+              <div id="drawerCompassNeedle" class="w-4 h-4 text-amber-400 transition-transform">
+                <i data-lucide="navigation" class="w-4 h-4 fill-amber-400"></i>
+              </div>
+              <span id="drawerHeading" class="text-lg font-bold font-mono text-white">214°</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="battery-charging" class="w-3 h-3 text-purple-400"></i> Fuel / Health
+            </div>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span id="drawerFuel" class="text-lg font-bold font-mono text-white">92%</span>
+              <span class="text-[10px] text-emerald-400 font-semibold">Optimal</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/30 border border-slate-700/40 rounded-xl p-3 space-y-1.5 font-mono text-[11px]">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Lat / Lon:</span>
+            <span id="drawerCoords" class="text-slate-200">28.6139°, 77.2090°</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Transponder:</span>
+            <span id="drawerTransponder" class="text-slate-200">Mode-S / ADS-B</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Squawk / MMSI:</span>
+            <span id="drawerSquawk" class="text-sky-300">4712</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Source:</span>
+            <span id="drawerSource" class="text-emerald-400 font-sans font-medium">Telemetry Engine</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button id="btnFollowVehicle" class="flex-1 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 font-medium text-white flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-sky-600/30">
+            <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+            <span id="followBtnText">Lock Camera</span>
+          </button>
+          <button id="btnShowTrail" class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center gap-1.5 transition-colors">
+            <i data-lucide="route" class="w-3.5 h-3.5"></i>
+            <span>Trail</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backend WebSocket Configuration Modal -->
+    <div id="backendModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="server" class="w-5 h-5 text-emerald-400"></i>
+            Connect Backend (Heroku / Cloud)
+          </h3>
+          <button id="btnCloseModal" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <p class="text-xs text-slate-400">
+          Heroku ya Render par deployed FastAPI backend ka WebSocket URL enter karein. Example:
+          <code class="block mt-1 p-1 bg-slate-800 rounded text-sky-300 font-mono">wss://your-backend.herokuapp.com/ws/telemetry</code>
+        </p>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">WebSocket URL</label>
+          <input 
+            id="wsUrlInput" 
+            type="text" 
+            placeholder="wss://your-app.herokuapp.com/ws/telemetry"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-sky-500 font-mono"
+          />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button id="btnDisconnectWS" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300">
+            Use Local Engine
+          </button>
+          <button id="btnSaveWS" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-medium text-white shadow-lg shadow-emerald-600/30">
+            Connect Live Stream
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="absolute bottom-6 left-4 z-20 hidden md:flex items-center gap-3 bg-slate-900/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-800 shadow-xl text-xs">
+      <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Legend:</span>
+      <span class="flex items-center gap-1 text-sky-400"><span class="w-2 h-2 rounded-full bg-sky-400"></span> Air</span>
+      <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Train</span>
+      <span class="flex items-center gap-1 text-orange-400"><span class="w-2 h-2 rounded-full bg-orange-400"></span> Ship</span>
+      <span class="flex items-center gap-1 text-purple-400"><span class="w-2 h-2 rounded-full bg-purple-400"></span> Bus</span>
+      <span class="flex items-center gap-1 text-yellow-400"><span class="w-2 h-2 rounded-full bg-yellow-400"></span> Car</span>
+    </div>
+
+    <!-- Dispatch Log -->
+    <div class="absolute bottom-6 right-4 z-20 max-w-sm hidden lg:block bg-slate-900/95 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-800 shadow-xl text-xs font-mono">
+      <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+        <span class="flex items-center gap-1 text-sky-400 font-semibold">
+          <i data-lucide="radio" class="w-3 h-3 text-emerald-400 animate-pulse"></i> LIVE DISPATCH LOG
+        </span>
+        <span id="tickerLogTime">JUST NOW</span>
+      </div>
+      <div id="liveTickerMsg" class="text-slate-200 truncate">
+        ✈️ AI-161 (DEL → LHR) cruising at FL360 over Western corridor.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // Sound FX generator
+    class SoundEngine {
+      constructor() { this.ctx = null; this.enabled = true; }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+      }
+      beep(freq = 880, duration = 0.08) {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      }
+      toggle() { this.enabled = !this.enabled; return this.enabled; }
+    }
+    const sound = new SoundEngine();
+
+    const btnAudio = document.getElementById('btnAudio');
+    const audioIcon = document.getElementById('audioIcon');
+    btnAudio.addEventListener('click', () => {
+      const active = sound.toggle();
+      audioIcon.classList.toggle('text-emerald-400', active);
+      audioIcon.classList.toggle('text-slate-500', !active);
+    });
+
+    setInterval(() => {
+      document.getElementById('utcClock').textContent = new Date().toUTCString().split(' ')[4] + ' UTC';
+    }, 1000);
+
+    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    const CATEGORY_COLORS = {
+      flight: '#38bdf8', train: '#10b981', ship: '#f97316', bus: '#a855f7', car: '#eab308'
+    };
+
+    function getCategorySVG(cat, color) {
+      if (cat === 'flight') {
+        return `<svg viewBox="0 0 24 24" width="24" height="24" fill="${color}" stroke="#0f172a" stroke-width="1.5"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>`;
+      } else if (cat === 'train') {
+        return `<svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="#0f172a" stroke-width="1.5"><rect x="4" y="3" width="16" height="15" rx="3"/><line x1="4" y1="10" x2="20" y2="10"/><circle cx="8" cy="14" r="1.5" fill="#0f172a"/><circle cx="16" cy="14" r="1.5" fill="#0f172a"/><line x1="7" y1="21" x2="10" y2="18"/><line x1="17" y1="21" x2="14" y2="18"/></svg>`;
+      } else if (cat === 'ship') {
+        return `<svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="#0f172a" stroke-width="1.5"><path d="M2 20a2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1"/><path d="M4 18l-1-5h18l-1 5"/><path d="M6 13V6h5v7"/><path d="M12 9h4v4"/></svg>`;
+      } else if (cat === 'bus') {
+        return `<svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="#0f172a" stroke-width="1.5"><rect x="4" y="3" width="16" height="15" rx="3"/><line x1="4" y1="8" x2="20" y2="8"/><circle cx="8" cy="14" r="1.5" fill="#0f172a"/><circle cx="16" cy="14" r="1.5" fill="#0f172a"/><line x1="6" y1="18" x2="6" y2="21"/><line x1="18" y1="18" x2="18" y2="21"/></svg>`;
+      } else {
+        return `<svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="#0f172a" stroke-width="1.5"><path d="M5 11l2-5h10l2 5"/><rect x="3" y="11" width="18" height="7" rx="2"/><circle cx="7" cy="18" r="2" fill="#0f172a"/><circle cx="17" cy="18" r="2" fill="#0f172a"/></svg>`;
+      }
+    }
+
+    let INITIAL_FLEET = [
+      { id: "AI-161", callsign: "AIC161", category: "flight", operator: "Air India Express", origin: { code: "DEL", city: "New Delhi", lat: 28.5562, lon: 77.1000 }, dest: { code: "LHR", city: "London", lat: 51.4700, lon: -0.4543 }, lat: 29.8, lon: 74.2, speed: 840, altitude: 36000, heading: 295, status: "Cruising - On Time", eta: "21:30 UTC", fuel: 88, squawk: "4712", transponder: "Mode-S ADS-B", source: "Telemetry Stream" },
+      { id: "6E-204", callsign: "IGO204", category: "flight", operator: "IndiGo Airlines", origin: { code: "BOM", city: "Mumbai", lat: 19.0896, lon: 72.8656 }, dest: { code: "DEL", city: "New Delhi", lat: 28.5562, lon: 77.1000 }, lat: 23.4, lon: 74.9, speed: 780, altitude: 32000, heading: 32, status: "En Route", eta: "15:45 UTC", fuel: 76, squawk: "1254", transponder: "Mode-S ADS-B", source: "ADS-B Exchange" },
+      { id: "VB-22436", callsign: "VANDE-BHARAT", category: "train", operator: "Indian Railways", origin: { code: "NDLS", city: "New Delhi", lat: 28.6424, lon: 77.2188 }, dest: { code: "BSB", city: "Varanasi", lat: 25.3283, lon: 82.9739 }, lat: 26.8467, lon: 80.9462, speed: 130, altitude: 125, heading: 110, status: "Express Corridor", eta: "14:15 UTC", fuel: 98, squawk: "VB-01", transponder: "RTIS ISRO", source: "CRIS / GTFS-RT" },
+      { id: "EVER-GIVEN", callsign: "H3RC", category: "ship", operator: "Evergreen Marine", origin: { code: "PKG", city: "Port Klang", lat: 2.9999, lon: 101.3928 }, dest: { code: "ROT", city: "Rotterdam", lat: 51.9244, lon: 4.4777 }, lat: 12.8, lon: 53.2, speed: 38, altitude: 0, heading: 260, status: "International Sea Lane", eta: "4d 12h", fuel: 80, squawk: "MMSI 353136000", transponder: "Class A AIS", source: "AISHub Feed" },
+      { id: "DL-VOLVO-99", callsign: "HR-68B-1090", category: "bus", operator: "Haryana Roadways", origin: { code: "ISBT", city: "Delhi", lat: 28.6675, lon: 77.2330 }, dest: { code: "CDG", city: "Chandigarh", lat: 30.7333, lon: 76.7794 }, lat: 29.5, lon: 76.9, speed: 85, altitude: 235, heading: 345, status: "GT Road Express", eta: "18:00 UTC", fuel: 72, squawk: "HR-99", transponder: "AIS-140 GPS", source: "State Transit" },
+      { id: "CAB-DEL-VIP1", callsign: "EV-NEXON-01", category: "car", operator: "BluSmart EV Fleet", origin: { code: "IGI-T3", city: "Airport", lat: 28.5562, lon: 77.1000 }, dest: { code: "CP", city: "Connaught Place", lat: 28.6315, lon: 77.2167 }, lat: 28.59, lon: 77.16, speed: 55, altitude: 215, heading: 52, status: "Trip in Progress", eta: "14 mins", fuel: 84, squawk: "EV-DEL", transponder: "OBD-II Telematics", source: "BluSmart Stream" }
+    ];
+
+    let vehicles = [...INITIAL_FLEET];
+    let markers = new Map();
+    let activeCategories = new Set(['flight', 'train', 'ship', 'bus', 'car']);
+    let selectedVehicle = null;
+    let vehicleTrailLayer = null;
+    let cameraFollowInterval = null;
+    let ws = null;
+    let localSimInterval = null;
+
+    function createVehicleIcon(v) {
+      const color = CATEGORY_COLORS[v.category];
+      const svg = getCategorySVG(v.category, color);
+      return L.divIcon({
+        className: 'custom-vehicle-marker',
+        html: `
+          <div class="vehicle-marker-icon flex items-center justify-center relative cursor-pointer" style="transform: rotate(${v.heading}deg);">
+            <div class="p-1 rounded-full bg-slate-900/90 border border-slate-700/80 shadow-lg hover:scale-125 transition-transform">
+              ${svg}
+            </div>
+            <div class="absolute -top-1 -right-1 w-2 h-2 rounded-full" style="background-color: ${color};"></div>
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+    }
+
+    function renderMarkers() {
+      for (const [id, marker] of markers.entries()) {
+        const v = vehicles.find(item => item.id === id);
+        if (!v || !activeCategories.has(v.category)) {
+          map.removeLayer(marker);
+          markers.delete(id);
+        }
+      }
+
+      vehicles.forEach(v => {
+        if (!activeCategories.has(v.category)) return;
+        if (markers.has(v.id)) {
+          const marker = markers.get(v.id);
+          marker.setLatLng([v.lat, v.lon]);
+          marker.setIcon(createVehicleIcon(v));
+        } else {
+          const marker = L.marker([v.lat, v.lon], { icon: createVehicleIcon(v) });
+          marker.on('click', () => {
+            selectVehicle(v);
+            sound.beep(660, 0.06);
+          });
+          marker.addTo(map);
+          markers.set(v.id, marker);
+        }
+      });
+      updateBadges();
+    }
+
+    function updateBadges() {
+      const counts = { flight: 0, train: 0, ship: 0, bus: 0, car: 0 };
+      vehicles.forEach(v => { if (counts[v.category] !== undefined) counts[v.category]++; });
+      document.getElementById('badgeFlight').textContent = counts.flight;
+      document.getElementById('badgeTrain').textContent = counts.train;
+      document.getElementById('badgeShip').textContent = counts.ship;
+      document.getElementById('badgeBus').textContent = counts.bus;
+      document.getElementById('badgeCar').textContent = counts.car;
+      document.getElementById('totalActiveCount').textContent = vehicles.filter(v => activeCategories.has(v.category)).length;
+    }
+
+    // Local Fallback Simulation
+    function runLocalSimulation() {
+      vehicles.forEach(v => {
+        const speedFactor = (v.speed / 3600) * 0.012;
+        const rad = (v.heading * Math.PI) / 180;
+        v.lat += Math.cos(rad) * speedFactor;
+        v.lon += Math.sin(rad) * speedFactor;
+        if (Math.random() > 0.7) v.heading = (v.heading + (Math.random() * 4 - 2) + 360) % 360;
+        if (Math.random() > 0.8) v.speed = Math.max(15, Math.round(v.speed + (Math.random() * 6 - 3)));
+      });
+      renderMarkers();
+      if (selectedVehicle) {
+        const current = vehicles.find(v => v.id === selectedVehicle.id);
+        if (current) updateInspectorDetails(current);
+      }
+    }
+    localSimInterval = setInterval(runLocalSimulation, 1200);
+
+    // WebSocket Client Connector
+    function connectBackendWebSocket(url) {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      try {
+        ws = new WebSocket(url);
+        document.getElementById('backendStatusText').textContent = "Connecting WS...";
+        document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
+
+        ws.onopen = () => {
+          clearInterval(localSimInterval); // Stop local simulation, use live backend feed
+          document.getElementById('backendStatusText').textContent = "Heroku WebSocket Connected";
+          document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-emerald-400";
+          document.getElementById('streamSourceLabel').textContent = "Heroku Live WebSocket";
+          sound.beep(1040, 0.1);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.vehicles) {
+              vehicles = data.vehicles;
+              renderMarkers();
+              if (selectedVehicle) {
+                const current = vehicles.find(v => v.id === selectedVehicle.id);
+                if (current) updateInspectorDetails(current);
+              }
+            }
+          } catch (e) {}
+        };
+
+        ws.onerror = () => {
+          console.warn("WebSocket connection error. Falling back to local engine.");
+          fallbackToLocal();
+        };
+
+        ws.onclose = () => {
+          fallbackToLocal();
+        };
+      } catch (err) {
+        fallbackToLocal();
+      }
+    }
+
+    function fallbackToLocal() {
+      document.getElementById('backendStatusText').textContent = "Local Engine Active";
+      document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-sky-400";
+      document.getElementById('streamSourceLabel').textContent = "Local Telemetry Engine";
+      if (!localSimInterval) {
+        localSimInterval = setInterval(runLocalSimulation, 1200);
+      }
+    }
+
+    // Modal Backend settings
+    const backendModal = document.getElementById('backendModal');
+    document.getElementById('btnConfigBackend').addEventListener('click', () => {
+      backendModal.classList.remove('hidden');
+    });
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+      backendModal.classList.add('hidden');
+    });
+    document.getElementById('btnSaveWS').addEventListener('click', () => {
+      const url = document.getElementById('wsUrlInput').value.trim();
+      if (url) {
+        localStorage.setItem('std_track_ws_url', url);
+        connectBackendWebSocket(url);
+      }
+      backendModal.classList.add('hidden');
+    });
+    document.getElementById('btnDisconnectWS').addEventListener('click', () => {
+      if (ws) ws.close();
+      fallbackToLocal();
+      backendModal.classList.add('hidden');
+    });
+
+    // Auto connect saved WS URL if any
+    const savedWs = localStorage.getItem('std_track_ws_url');
+    if (savedWs) {
+      document.getElementById('wsUrlInput').value = savedWs;
+      connectBackendWebSocket(savedWs);
+    }
+
+    // Inspector Details
+    function selectVehicle(v) {
+      selectedVehicle = v;
+      const drawer = document.getElementById('inspectorDrawer');
+      drawer.classList.remove('hidden');
+
+      const color = CATEGORY_COLORS[v.category];
+      document.getElementById('drawerIconWrapper').style.borderColor = color;
+      document.getElementById('drawerIconWrapper').style.color = color;
+      document.getElementById('drawerBadge').textContent = v.category.toUpperCase();
+      document.getElementById('drawerBadge').style.backgroundColor = `${color}25`;
+      document.getElementById('drawerBadge').style.color = color;
+
+      document.getElementById('drawerCallsign').textContent = v.id;
+      document.getElementById('drawerOperator').textContent = v.operator;
+      document.getElementById('drawerOriginCode').textContent = v.origin.code;
+      document.getElementById('drawerOriginCity').textContent = v.origin.city;
+      document.getElementById('drawerDestCode').textContent = v.dest.code;
+      document.getElementById('drawerDestCity').textContent = v.dest.city;
+      document.getElementById('drawerStatusText').textContent = v.status;
+      document.getElementById('drawerETA').textContent = v.eta;
+      document.getElementById('drawerSpeed').textContent = v.speed;
+      document.getElementById('drawerSpeedUnit').textContent = v.category === 'ship' ? 'knots' : 'km/h';
+      document.getElementById('drawerAltitude').textContent = v.category === 'flight' ? v.altitude.toLocaleString() : (v.altitude + ' m');
+      document.getElementById('drawerAltitudeUnit').textContent = v.category === 'flight' ? 'ft' : 'elev';
+      document.getElementById('drawerHeading').textContent = `${v.heading}°`;
+      document.getElementById('drawerCompassNeedle').style.transform = `rotate(${v.heading}deg)`;
+      document.getElementById('drawerFuel').textContent = `${v.fuel}%`;
+      document.getElementById('drawerCoords').textContent = `${v.lat.toFixed(4)}°, ${v.lon.toFixed(4)}°`;
+      document.getElementById('drawerSquawk').textContent = v.squawk;
+      document.getElementById('drawerTransponder').textContent = v.transponder;
+      document.getElementById('drawerSource').textContent = v.source;
+
+      const catIcon = document.getElementById('drawerCategoryIcon');
+      if (v.category === 'flight') catIcon.setAttribute('data-lucide', 'plane');
+      else if (v.category === 'train') catIcon.setAttribute('data-lucide', 'train');
+      else if (v.category === 'ship') catIcon.setAttribute('data-lucide', 'ship');
+      else if (v.category === 'bus') catIcon.setAttribute('data-lucide', 'bus');
+      else catIcon.setAttribute('data-lucide', 'car');
+      lucide.createIcons();
+
+      map.panTo([v.lat, v.lon], { animate: true, duration: 0.8 });
+      drawVehicleTrail(v);
+    }
+
+    function updateInspectorDetails(v) {
+      document.getElementById('drawerSpeed').textContent = v.speed;
+      document.getElementById('drawerHeading').textContent = `${v.heading}°`;
+      document.getElementById('drawerCompassNeedle').style.transform = `rotate(${v.heading}deg)`;
+      document.getElementById('drawerCoords').textContent = `${v.lat.toFixed(4)}°, ${v.lon.toFixed(4)}°`;
+    }
+
+    function drawVehicleTrail(v) {
+      if (vehicleTrailLayer) map.removeLayer(vehicleTrailLayer);
+      vehicleTrailLayer = L.polyline([
+        [v.origin.lat, v.origin.lon], [v.lat, v.lon], [v.dest.lat, v.dest.lon]
+      ], {
+        color: CATEGORY_COLORS[v.category], weight: 2.5, opacity: 0.8, dashArray: '5, 8'
+      }).addTo(map);
+    }
+
+    document.getElementById('btnCloseDrawer').addEventListener('click', () => {
+      document.getElementById('inspectorDrawer').classList.add('hidden');
+      selectedVehicle = null;
+      if (vehicleTrailLayer) { map.removeLayer(vehicleTrailLayer); vehicleTrailLayer = null; }
+      if (cameraFollowInterval) { clearInterval(cameraFollowInterval); cameraFollowInterval = null; document.getElementById('followBtnText').textContent = "Lock Camera"; }
+    });
+
+    const btnFollow = document.getElementById('btnFollowVehicle');
+    btnFollow.addEventListener('click', () => {
+      if (!selectedVehicle) return;
+      if (cameraFollowInterval) {
+        clearInterval(cameraFollowInterval);
+        cameraFollowInterval = null;
+        document.getElementById('followBtnText').textContent = "Lock Camera";
+        sound.beep(440, 0.05);
+      } else {
+        document.getElementById('followBtnText').textContent = "Unfollow";
+        sound.beep(880, 0.08);
+        cameraFollowInterval = setInterval(() => {
+          if (!selectedVehicle) return;
+          const current = vehicles.find(v => v.id === selectedVehicle.id);
+          if (current) map.panTo([current.lat, current.lon], { animate: true, duration: 0.5 });
+        }, 1200);
+      }
+    });
+
+    // Categories
+    document.querySelectorAll('.category-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = btn.getAttribute('data-category');
+        if (activeCategories.has(cat)) {
+          activeCategories.delete(cat);
+          btn.classList.remove('active');
+          btn.classList.add('opacity-40');
+        } else {
+          activeCategories.add(cat);
+          btn.classList.add('active');
+          btn.classList.remove('opacity-40');
+        }
+        sound.beep(520, 0.04);
+        renderMarkers();
+      });
+    });
+
+    document.getElementById('btnResetView').addEventListener('click', () => {
+      map.flyTo([20.5937, 78.9629], 5, { duration: 1.2 });
+      sound.beep(750, 0.05);
+    });
+
+    // Search
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) { searchResults.classList.add('hidden'); searchResults.innerHTML = ''; return; }
+      const matches = vehicles.filter(v => 
+        v.id.toLowerCase().includes(q) || v.callsign.toLowerCase().includes(q) || v.operator.toLowerCase().includes(q)
+      );
+      if (matches.length === 0) {
+        searchResults.innerHTML = `<div class="p-3 text-slate-500 text-xs text-center">No transport found matching "${q}"</div>`;
+        searchResults.classList.remove('hidden');
+        return;
+      }
+      searchResults.innerHTML = matches.map(m => `
+        <div class="search-item p-2.5 hover:bg-slate-800 border-b border-slate-800/80 cursor-pointer flex items-center justify-between" data-id="${m.id}">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" style="background-color: ${CATEGORY_COLORS[m.category]}"></span>
+            <div class="font-bold font-mono text-slate-100 text-xs">${m.id} <span class="text-slate-400 font-normal">(${m.operator})</span></div>
+          </div>
+          <span class="text-[10px] font-mono text-sky-400 uppercase font-semibold px-2 py-0.5 rounded bg-slate-800">${m.category}</span>
+        </div>
+      `).join('');
+      searchResults.classList.remove('hidden');
+
+      document.querySelectorAll('.search-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.getAttribute('data-id');
+          const target = vehicles.find(v => v.id === id);
+          if (target) {
+            selectVehicle(target);
+            map.flyTo([target.lat, target.lon], 7, { duration: 1 });
+            sound.beep(880, 0.08);
+          }
+          searchResults.classList.add('hidden');
+          searchInput.value = '';
+        });
+      });
+    });
+
+    // OpenSky ADS-B API button
+    document.getElementById('btnOpenSky').addEventListener('click', async () => {
+      const btn = document.getElementById('btnOpenSky');
+      btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> Fetching ADS-B...`;
+      lucide.createIcons();
+      try {
+        const res = await fetch('https://opensky-network.org/api/states/all?lamin=8&lomin=68&lamax=35&lomax=97');
+        const data = await res.json();
+        if (data.states && data.states.length > 0) {
+          const liveFlights = data.states.slice(0, 25).map(s => ({
+            id: (s[1] || "FLIGHT").trim() || "LIVE-ADS-B",
+            callsign: (s[1] || "FLIGHT").trim(),
+            category: "flight",
+            operator: s[2] ? `Origin: ${s[2]}` : "Commercial Airline",
+            origin: { code: "DEP", city: "Origin Airspace", lat: s[6] - 2, lon: s[5] - 2 },
+            dest: { code: "ARR", city: "En Route", lat: s[6] + 2, lon: s[5] + 2 },
+            lat: s[6] || 20.0,
+            lon: s[5] || 78.0,
+            speed: Math.round((s[9] || 220) * 3.6),
+            altitude: Math.round((s[7] || 10000) * 3.28084),
+            heading: Math.round(s[10] || 0),
+            status: "Airborne (Live ADS-B)",
+            eta: "Live Stream",
+            fuel: 85,
+            squawk: s[14] || "7000",
+            transponder: "OpenSky Mode-S",
+            source: "OpenSky Live ADS-B"
+          }));
+          vehicles = [...vehicles.filter(v => v.category !== 'flight'), ...liveFlights];
+          renderMarkers();
+          sound.beep(1040, 0.15);
+          btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Added ${liveFlights.length} Flights`;
+        }
+      } catch (e) {
+        btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Simulation Boosted`;
+      }
+      lucide.createIcons();
+      setTimeout(() => {
+        btn.innerHTML = `<i data-lucide="satellite" class="w-3.5 h-3.5 text-sky-400"></i> OpenSky ADS-B`;
+        lucide.createIcons();
+      }, 3500);
+    });
+
+    renderMarkers();
+  </script>
+</body>
+</html>
