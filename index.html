@@ -409,6 +409,11 @@
   </div>
 
   <script>
+    // =========================================================================
+    // ⚙️ HEROKU BACKEND CONFIGURATION
+    const HEROKU_BACKEND_WS_URL = "wss://stdtrack-b2fe4ba0ab18.herokuapp.com/ws/telemetry"; 
+    // =========================================================================
+
     lucide.createIcons();
 
     // Sound FX generator
@@ -643,11 +648,11 @@
       backendModal.classList.add('hidden');
     });
 
-    // Auto connect saved WS URL if any
-    const savedWs = localStorage.getItem('std_track_ws_url');
-    if (savedWs) {
-      document.getElementById('wsUrlInput').value = savedWs;
-      connectBackendWebSocket(savedWs);
+    // Auto connect Heroku WS URL or saved WS URL
+    const activeWs = localStorage.getItem('std_track_ws_url') || HEROKU_BACKEND_WS_URL;
+    if (activeWs) {
+      document.getElementById('wsUrlInput').value = activeWs;
+      connectBackendWebSocket(activeWs);
     }
 
     // Inspector Details
