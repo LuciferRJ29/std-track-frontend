@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>STD Track — Global Realtime Aerospace & Multi-Modal Radar</title>
+  <title>STD Track Pro — World-Class Global Multi-Modal Telemetry Radar</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,19 +14,20 @@
         extend: {
           colors: {
             radar: {
-              bg: '#060a14',
-              card: '#0f172a',
-              border: '#1e293b',
-              flight: '#38bdf8',
+              bg: '#040711',
+              surface: '#0a0f1d',
+              border: '#1a243b',
+              flight: '#eab308', // Classic Flightradar24 yellow
+              flightHigh: '#38bdf8', // High cruise cyan
               train: '#10b981',
               ship: '#f97316',
               bus: '#a855f7',
-              car: '#eab308'
+              car: '#ec4899'
             }
           },
           animation: {
-            'radar-sweep': 'sweep 4s linear infinite',
-            'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite'
+            'radar-pulse': 'pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'radar-spin': 'spin 10s linear infinite',
           }
         }
       }
@@ -41,13 +42,13 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
-    /* Dark tactical theme for Leaflet */
+    /* Dark aerospace theme for Leaflet */
     .leaflet-container {
-      background-color: #050811 !important;
-      font-family: inherit;
+      background-color: #040711 !important;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .leaflet-bar a {
-      background-color: #0f172a !important;
+      background-color: #0b1120 !important;
       color: #94a3b8 !important;
       border-color: #1e293b !important;
     }
@@ -56,128 +57,131 @@
       color: #38bdf8 !important;
     }
     
-    /* Clean Tooltip Styling */
+    /* Tactical Tooltip */
     .leaflet-tooltip.tactical-tooltip {
-      background: rgba(15, 23, 42, 0.95) !important;
-      border: 1px solid rgba(56, 189, 248, 0.4) !important;
-      border-radius: 0.75rem !important;
-      color: #f1f5f9 !important;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 0 15px rgba(56, 189, 248, 0.2) !important;
-      padding: 6px 10px !important;
-      backdrop-filter: blur(8px);
+      background: rgba(10, 15, 29, 0.96) !important;
+      border: 1px solid rgba(56, 189, 248, 0.45) !important;
+      border-radius: 0.85rem !important;
+      color: #f8fafc !important;
+      box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.9), 0 0 20px rgba(56, 189, 248, 0.15) !important;
+      padding: 8px 12px !important;
+      backdrop-filter: blur(12px);
     }
     .leaflet-tooltip-top:before {
-      border-top-color: rgba(15, 23, 42, 0.95) !important;
+      border-top-color: rgba(10, 15, 29, 0.96) !important;
     }
 
-    /* Target Reticle Lock animation */
-    @keyframes reticle-pulse {
-      0% { transform: scale(0.9); opacity: 0.8; }
-      50% { transform: scale(1.15); opacity: 1; }
-      100% { transform: scale(0.9); opacity: 0.8; }
+    /* Target Reticle Lock */
+    @keyframes target-pulse {
+      0% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+      70% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
+      100% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
     }
-    .target-reticle {
-      animation: reticle-pulse 1.8s ease-in-out infinite;
+    .target-locked {
+      animation: target-pulse 1.6s infinite;
     }
 
-    /* Subtle Radar Grid */
+    /* Radar scanline texture */
     .radar-grid {
       background-image: 
-        radial-gradient(circle at center, rgba(56, 189, 248, 0.04) 0%, transparent 75%),
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 60px 60px, 60px 60px;
+        radial-gradient(circle at center, rgba(56, 189, 248, 0.03) 0%, transparent 80%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 80px 80px, 80px 80px;
       pointer-events: none;
     }
 
     .vehicle-icon-wrap {
       transition: transform 0.4s linear;
-      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.85));
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.9));
     }
 
     ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #0b1120; }
+    ::-webkit-scrollbar-track { background: #060a14; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
   </style>
 </head>
-<body class="bg-[#050811] text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans select-none">
+<body class="bg-[#040711] text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans select-none">
 
-  <!-- Top Aerospace Nav Bar -->
-  <header class="h-16 bg-[#090e1a]/95 backdrop-blur-md border-b border-slate-800/80 px-4 flex items-center justify-between z-30 shrink-0">
-    <!-- Brand -->
+  <!-- ========================================================================= -->
+  <!-- 🛰️ TOP AEROSPACE NAVIGATION BAR -->
+  <!-- ========================================================================= -->
+  <header class="h-16 bg-[#070c18]/95 backdrop-blur-xl border-b border-slate-800/90 px-3 sm:px-5 flex items-center justify-between z-30 shrink-0">
+    <!-- Brand & Live Pulse -->
     <div class="flex items-center gap-3">
-      <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 via-indigo-600 to-teal-500 shadow-lg shadow-sky-500/25">
-        <i data-lucide="crosshair" class="w-5 h-5 text-white animate-spin" style="animation-duration: 12s;"></i>
+      <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-amber-500 shadow-lg shadow-sky-500/20">
+        <i data-lucide="crosshair" class="w-5 h-5 text-white animate-spin" style="animation-duration: 16s;"></i>
         <span class="absolute -top-1 -right-1 flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80"></span>
           <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
         </span>
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-sky-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
-            STD TRACK
+          <h1 class="font-black text-lg tracking-tight bg-gradient-to-r from-sky-300 via-teal-200 to-amber-300 bg-clip-text text-transparent">
+            STD TRACK <span class="text-xs font-mono font-bold text-sky-400 tracking-wider">PRO</span>
           </h1>
-          <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 flex items-center gap-1">
+          <span id="activeModeBadge" class="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 rounded bg-sky-950/80 border border-sky-500/40 text-sky-300 flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            LIVE RADAR
+            ALL MODES
           </span>
         </div>
         <p class="text-[11px] text-slate-400 flex items-center gap-1.5">
           <span id="backendStatusDot" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span id="backendStatusText" class="truncate max-w-[180px] sm:max-w-none">Heroku Stream Active</span>
+          <span id="backendStatusText" class="truncate max-w-[170px] sm:max-w-none">Heroku Live Stream Connected</span>
         </p>
       </div>
     </div>
 
-    <!-- Center Search Bar -->
-    <div class="flex-1 max-w-lg mx-4 hidden md:block">
+    <!-- Center Search Bar with Instant Autocomplete -->
+    <div class="flex-1 max-w-md mx-4 hidden md:block">
       <div class="relative">
         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
         <input 
           id="searchInput"
           type="text" 
-          placeholder="Search flight (AI-161, 6E-204), ship, train or city..."
+          placeholder="Search flight (AI-161, 6E-204), ship (EVER GIVEN), train or city..."
           class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-10 pr-20 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all shadow-inner"
         />
         <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <span class="text-[10px] text-slate-500 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700">ESC</span>
         </div>
-        <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto z-50"></div>
+        <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-1.5 bg-slate-900/98 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto z-50 backdrop-blur-xl"></div>
       </div>
     </div>
 
-    <!-- Right Controls & Map Theme Switcher -->
+    <!-- Right Controls: Mode Selector, Theme, and Stats -->
     <div class="flex items-center gap-2 sm:gap-2.5">
-      <!-- 1-Click Map Theme Switcher -->
+      <!-- 1-Click Map Tile Switcher (Zero Watermark) -->
       <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-700/80 text-xs">
         <button id="btnThemeDark" class="theme-btn active px-2.5 py-1 rounded-lg text-sky-400 bg-slate-800 font-medium flex items-center gap-1 transition-all" title="Tactical Dark Radar (Zero Watermark)">
           <i data-lucide="moon" class="w-3.5 h-3.5"></i>
-          <span class="hidden lg:inline">Radar</span>
+          <span class="hidden xl:inline">Radar</span>
         </button>
         <button id="btnThemeSat" class="theme-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 font-medium flex items-center gap-1 transition-all" title="Photorealistic Satellite Imagery">
           <i data-lucide="satellite" class="w-3.5 h-3.5"></i>
-          <span class="hidden lg:inline">Satellite</span>
+          <span class="hidden xl:inline">Satellite</span>
         </button>
         <button id="btnThemeOSM" class="theme-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 font-medium flex items-center gap-1 transition-all" title="Clean Navigation Map">
           <i data-lucide="map" class="w-3.5 h-3.5"></i>
-          <span class="hidden lg:inline">Clean</span>
+          <span class="hidden xl:inline">Clean</span>
         </button>
       </div>
 
-      <!-- Fit Fleet Bounds Button -->
+      <!-- Fit Camera to Fleet -->
       <button 
         id="btnFitBounds" 
-        title="Auto-fit camera to view all active aircraft & vessels"
+        title="Auto-fit camera to view all active transports"
         class="px-2.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all flex items-center gap-1 text-xs">
         <i data-lucide="maximize-2" class="w-3.5 h-3.5 text-sky-400"></i>
         <span class="hidden sm:inline">Fit All</span>
       </button>
 
-      <!-- Backend WS Config Modal Trigger -->
+      <!-- WebSocket Settings -->
       <button 
         id="btnConfigBackend"
-        title="Heroku WebSocket Settings"
+        title="Heroku Backend WebSocket Settings"
         class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all">
         <i data-lucide="server" class="w-4 h-4 text-emerald-400"></i>
       </button>
@@ -185,208 +189,212 @@
       <!-- Audio Sonar Toggle -->
       <button 
         id="btnAudio" 
-        title="Toggle audio sonar feedback"
+        title="Toggle audio feedback"
         class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all">
         <i data-lucide="volume-2" id="audioIcon" class="w-4 h-4 text-emerald-400"></i>
       </button>
 
       <!-- UTC Clock -->
       <div class="text-right hidden sm:block pl-2 border-l border-slate-800">
-        <div id="utcClock" class="font-mono text-xs font-semibold text-slate-200">00:00:00 UTC</div>
+        <div id="utcClock" class="font-mono text-xs font-bold text-slate-200">00:00:00 UTC</div>
         <div class="text-[10px] font-mono text-emerald-400 flex items-center justify-end gap-1">
           <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-          REALTIME
+          LIVE 1.0s
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Category Layer Filter Bar -->
-  <div class="bg-slate-900/90 border-b border-slate-800/80 px-4 py-2 flex items-center justify-between gap-2 overflow-x-auto z-20 text-xs text-slate-300 shrink-0">
-    <div class="flex items-center gap-2 shrink-0">
-      <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-        <i data-lucide="layers" class="w-3.5 h-3.5 text-sky-400"></i> Feeds:
+  <!-- ========================================================================= -->
+  <!-- 🎛️ DEDICATED TRACKING MODE BAR (NO CLUTTER / SMART LEVEL OF DETAIL) -->
+  <!-- ========================================================================= -->
+  <div class="bg-[#080d1b] border-b border-slate-800/90 px-3 sm:px-4 py-2 flex items-center justify-between gap-3 overflow-x-auto z-20 text-xs text-slate-300 shrink-0">
+    <!-- Mode Switcher Tabs -->
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <span class="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+        <i data-lucide="sliders" class="w-3.5 h-3.5 text-sky-400"></i> VIEW:
       </span>
 
-      <!-- Airplanes -->
-      <button data-category="flight" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-sky-500/40 bg-sky-950/60 text-sky-300 hover:bg-sky-900/60 transition-all">
-        <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-        <i data-lucide="plane" class="w-3.5 h-3.5"></i>
-        <span>Airplanes</span>
-        <span id="badgeFlight" class="font-mono text-[10px] bg-sky-900/80 px-2 py-0.5 rounded-full text-sky-200 font-bold">0</span>
+      <!-- All Modes -->
+      <button data-mode="all" class="mode-tab-btn active px-3 py-1 rounded-lg border border-sky-500/50 bg-sky-950/70 text-sky-200 font-semibold transition-all">
+        🌐 Unified Radar (<span id="countAll">0</span>)
       </button>
 
-      <!-- Trains -->
-      <button data-category="train" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/40 bg-emerald-950/60 text-emerald-300 hover:bg-emerald-900/60 transition-all">
-        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-        <i data-lucide="train" class="w-3.5 h-3.5"></i>
-        <span>Trains</span>
-        <span id="badgeTrain" class="font-mono text-[10px] bg-emerald-900/80 px-2 py-0.5 rounded-full text-emerald-200 font-bold">0</span>
+      <!-- FlightRadar24 Mode (Airplanes Only + Airports) -->
+      <button data-mode="flight" class="mode-tab-btn px-3 py-1 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-sky-300 hover:bg-slate-800 transition-all flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+        <i data-lucide="plane" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span>Flights Only</span>
+        <span id="countFlight" class="font-mono text-[10px] bg-amber-950/80 text-amber-300 px-1.5 py-0.2 rounded-full font-bold">0</span>
       </button>
 
-      <!-- Ships -->
-      <button data-category="ship" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-orange-500/40 bg-orange-950/60 text-orange-300 hover:bg-orange-900/60 transition-all">
+      <!-- MarineTraffic Mode (Ships Only + Ports) -->
+      <button data-mode="ship" class="mode-tab-btn px-3 py-1 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-orange-300 hover:bg-slate-800 transition-all flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-        <i data-lucide="ship" class="w-3.5 h-3.5"></i>
-        <span>Ships</span>
-        <span id="badgeShip" class="font-mono text-[10px] bg-orange-900/80 px-2 py-0.5 rounded-full text-orange-200 font-bold">0</span>
+        <i data-lucide="ship" class="w-3.5 h-3.5 text-orange-400"></i>
+        <span>Maritime</span>
+        <span id="countShip" class="font-mono text-[10px] bg-orange-950/80 text-orange-300 px-1.5 py-0.2 rounded-full font-bold">0</span>
       </button>
 
-      <!-- Buses -->
-      <button data-category="bus" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-purple-500/40 bg-purple-950/60 text-purple-300 hover:bg-purple-900/60 transition-all">
+      <!-- Railways Mode (Trains Only) -->
+      <button data-mode="train" class="mode-tab-btn px-3 py-1 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-emerald-300 hover:bg-slate-800 transition-all flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <i data-lucide="train" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <span>Railways</span>
+        <span id="countTrain" class="font-mono text-[10px] bg-emerald-950/80 text-emerald-300 px-1.5 py-0.2 rounded-full font-bold">0</span>
+      </button>
+
+      <!-- City Transit Mode (Buses & Cabs) -->
+      <button data-mode="transit" class="mode-tab-btn px-3 py-1 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-purple-300 hover:bg-slate-800 transition-all flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-        <i data-lucide="bus" class="w-3.5 h-3.5"></i>
-        <span>Buses</span>
-        <span id="badgeBus" class="font-mono text-[10px] bg-purple-900/80 px-2 py-0.5 rounded-full text-purple-200 font-bold">0</span>
-      </button>
-
-      <!-- Cars -->
-      <button data-category="car" class="category-btn active flex items-center gap-1.5 px-3 py-1 rounded-full border border-yellow-500/40 bg-yellow-950/60 text-yellow-300 hover:bg-yellow-900/60 transition-all">
-        <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
-        <i data-lucide="car" class="w-3.5 h-3.5"></i>
-        <span>Cars & Fleet</span>
-        <span id="badgeCar" class="font-mono text-[10px] bg-yellow-900/80 px-2 py-0.5 rounded-full text-yellow-200 font-bold">0</span>
+        <i data-lucide="bus" class="w-3.5 h-3.5 text-purple-400"></i>
+        <span>City Transit</span>
+        <span id="countTransit" class="font-mono text-[10px] bg-purple-950/80 text-purple-300 px-1.5 py-0.2 rounded-full font-bold">0</span>
       </button>
     </div>
 
-    <!-- Live Telemetry Status -->
-    <div class="hidden xl:flex items-center gap-4 text-xs font-mono text-slate-400 shrink-0">
-      <span class="flex items-center gap-1">
-        <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-400"></i>
-        Stream: <span id="streamSourceLabel" class="text-slate-200">Heroku Live Stream</span>
-      </span>
-      <span class="flex items-center gap-1">
-        <i data-lucide="cpu" class="w-3.5 h-3.5 text-sky-400"></i>
-        Tracked: <span id="totalActiveCount" class="text-emerald-400 font-bold">0</span> vehicles
-      </span>
+    <!-- Altitude Color Legend for Flights -->
+    <div class="hidden 2xl:flex items-center gap-2 text-[11px] font-mono text-slate-400 shrink-0">
+      <span class="text-slate-500 font-bold">ALTITUDE:</span>
+      <span class="flex items-center gap-1 text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-400"></span> &lt;10k ft</span>
+      <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> 10-25k ft</span>
+      <span class="flex items-center gap-1 text-sky-400"><span class="w-2 h-2 rounded-full bg-sky-400"></span> 25-38k ft</span>
+      <span class="flex items-center gap-1 text-purple-400"><span class="w-2 h-2 rounded-full bg-purple-400"></span> &gt;38k ft</span>
     </div>
   </div>
 
-  <!-- Main View Area (Map + Reticle + Telemetry Drawer) -->
+  <!-- ========================================================================= -->
+  <!-- 🗺️ MAIN RADAR DISPLAY & TELEMETRY PANELS -->
+  <!-- ========================================================================= -->
   <div class="relative flex-1 w-full h-full overflow-hidden">
     <!-- Map Container -->
     <div id="map" class="w-full h-full z-0"></div>
 
-    <!-- Subtle Radar Grid -->
+    <!-- Radar Texture Overlay -->
     <div class="radar-grid absolute inset-0 z-10 pointer-events-none"></div>
 
-    <!-- Active Vehicle Inspector Drawer (Slide-in) -->
-    <div id="inspectorDrawer" class="hidden absolute top-4 left-4 z-20 w-84 sm:w-96 max-h-[calc(100vh-140px)] bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300">
-      <!-- Drawer Header -->
-      <div id="drawerHeaderBg" class="p-4 bg-gradient-to-r from-sky-950/80 to-slate-900 border-b border-slate-800 flex items-start justify-between">
+    <!-- Active Vehicle Inspector Drawer (Flightradar24 / MarineTraffic Style) -->
+    <div id="inspectorDrawer" class="hidden absolute top-4 left-4 z-20 w-84 sm:w-96 max-h-[calc(100vh-140px)] bg-slate-900/98 backdrop-blur-2xl border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300">
+      
+      <!-- Drawer Header with Airline Branding -->
+      <div id="drawerHeaderBg" class="p-4 bg-gradient-to-r from-sky-950/90 via-slate-900 to-slate-900 border-b border-slate-800 flex items-start justify-between">
         <div class="flex items-center gap-3">
-          <div id="drawerIconWrapper" class="p-2.5 rounded-xl bg-sky-900/50 border border-sky-500/30 text-sky-400">
+          <div id="drawerIconWrapper" class="p-2.5 rounded-xl bg-sky-900/50 border border-sky-500/40 text-sky-400">
             <i id="drawerCategoryIcon" data-lucide="plane" class="w-6 h-6"></i>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <span id="drawerCallsign" class="text-base font-bold font-mono text-white tracking-wide">AI-161</span>
-              <span id="drawerBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-800/80 text-sky-200 uppercase font-semibold">AIR</span>
+              <span id="drawerCallsign" class="text-lg font-black font-mono text-white tracking-wider">AI-161</span>
+              <span id="drawerBadge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase bg-sky-800/80 text-sky-200">AIR</span>
             </div>
-            <div id="drawerOperator" class="text-xs text-slate-300 font-medium">Air India Express</div>
+            <div id="drawerOperator" class="text-xs text-slate-300 font-medium mt-0.5">Air India Express</div>
           </div>
         </div>
-        <button id="btnCloseDrawer" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+        <button id="btnCloseDrawer" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <!-- Drawer Content -->
+      <!-- Drawer Content Scrollable -->
       <div class="p-4 space-y-4 overflow-y-auto text-xs">
-        <!-- Route Banner -->
-        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
-          <div class="flex items-center justify-between text-slate-300 font-mono text-xs mb-1.5">
+        
+        <!-- Flight / Transit Route Progress Card -->
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3.5">
+          <div class="flex items-center justify-between text-slate-300 font-mono text-xs mb-2">
             <div>
-              <div id="drawerOriginCode" class="font-bold text-sm text-sky-400">DEL</div>
-              <div id="drawerOriginCity" class="text-[10px] text-slate-400">Departure</div>
+              <div id="drawerOriginCode" class="font-black text-base text-sky-400">DEL</div>
+              <div id="drawerOriginCity" class="text-[10px] text-slate-400 truncate max-w-[90px]">Delhi</div>
             </div>
             <div class="flex flex-col items-center flex-1 px-4">
-              <i id="drawerRouteIcon" data-lucide="arrow-right" class="w-4 h-4 text-slate-500"></i>
-              <div class="w-full h-1 bg-slate-700 rounded-full mt-1 overflow-hidden">
-                <div id="drawerProgressBar" class="h-full bg-sky-400 rounded-full" style="width: 58%"></div>
+              <i id="drawerRouteIcon" data-lucide="plane" class="w-4 h-4 text-amber-400"></i>
+              <div class="w-full h-1.5 bg-slate-700 rounded-full mt-1.5 overflow-hidden">
+                <div id="drawerProgressBar" class="h-full bg-gradient-to-r from-sky-500 to-amber-400 rounded-full" style="width: 58%"></div>
               </div>
             </div>
             <div class="text-right">
-              <div id="drawerDestCode" class="font-bold text-sm text-sky-400">BOM</div>
-              <div id="drawerDestCity" class="text-[10px] text-slate-400">Arrival</div>
+              <div id="drawerDestCode" class="font-black text-base text-sky-400">BOM</div>
+              <div id="drawerDestCity" class="text-[10px] text-slate-400 truncate max-w-[90px]">Mumbai</div>
             </div>
           </div>
-          <div class="flex justify-between items-center text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-700/50">
-            <span>Status: <strong id="drawerStatusText" class="text-emerald-400">Airborne - On Time</strong></span>
+          <div class="flex justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-700/50">
+            <span>Status: <strong id="drawerStatusText" class="text-emerald-400">Airborne - Cruising</strong></span>
             <span>ETA: <strong id="drawerETA" class="text-slate-200">18:45 UTC</strong></span>
           </div>
         </div>
 
-        <!-- Telemetry Gauges Matrix -->
+        <!-- Telemetry HUD Matrix -->
         <div class="grid grid-cols-2 gap-2.5">
-          <!-- Speed -->
+          <!-- Ground Speed -->
           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
-            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <i data-lucide="gauge" class="w-3 h-3 text-sky-400"></i> Speed
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1 font-mono">
+              <i data-lucide="gauge" class="w-3.5 h-3.5 text-amber-400"></i> Ground Speed
             </div>
             <div class="mt-1 flex items-baseline gap-1">
-              <span id="drawerSpeed" class="text-lg font-bold font-mono text-white">840</span>
+              <span id="drawerSpeed" class="text-xl font-black font-mono text-white">840</span>
               <span id="drawerSpeedUnit" class="text-xs text-slate-400">km/h</span>
             </div>
           </div>
 
-          <!-- Altitude -->
+          <!-- Altitude / Depth -->
           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
-            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <i data-lucide="trending-up" class="w-3 h-3 text-emerald-400"></i> Altitude
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1 font-mono">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i> Altitude
             </div>
             <div class="mt-1 flex items-baseline gap-1">
-              <span id="drawerAltitude" class="text-lg font-bold font-mono text-white">36,000</span>
+              <span id="drawerAltitude" class="text-xl font-black font-mono text-white">36,000</span>
               <span id="drawerAltitudeUnit" class="text-xs text-slate-400">ft</span>
             </div>
           </div>
 
-          <!-- Heading -->
+          <!-- True Track Heading & Compass -->
           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
-            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <i data-lucide="compass" class="w-3 h-3 text-amber-400"></i> Heading
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1 font-mono">
+              <i data-lucide="compass" class="w-3.5 h-3.5 text-sky-400"></i> True Heading
             </div>
             <div class="mt-1 flex items-center gap-2">
-              <div id="drawerCompassNeedle" class="w-4 h-4 text-amber-400 transition-transform">
-                <i data-lucide="navigation" class="w-4 h-4 fill-amber-400"></i>
+              <div id="drawerCompassNeedle" class="w-4 h-4 text-sky-400 transition-transform">
+                <i data-lucide="navigation" class="w-4 h-4 fill-sky-400"></i>
               </div>
-              <span id="drawerHeading" class="text-lg font-bold font-mono text-white">214°</span>
+              <span id="drawerHeading" class="text-xl font-black font-mono text-white">214°</span>
             </div>
           </div>
 
-          <!-- Fuel / Health -->
+          <!-- Vertical Rate / Health -->
           <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
-            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <i data-lucide="battery-charging" class="w-3 h-3 text-purple-400"></i> Health / Fuel
+            <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1 font-mono">
+              <i data-lucide="activity" class="w-3.5 h-3.5 text-purple-400"></i> Vertical Rate
             </div>
             <div class="mt-1 flex items-baseline gap-1">
-              <span id="drawerFuel" class="text-lg font-bold font-mono text-white">92%</span>
-              <span class="text-[10px] text-emerald-400 font-semibold">Optimal</span>
+              <span id="drawerVerticalRate" class="text-sm font-bold font-mono text-emerald-400">Level (0 fpm)</span>
             </div>
           </div>
         </div>
 
-        <!-- Coordinates -->
+        <!-- Technical Avionics & Coordinates -->
         <div class="bg-slate-800/30 border border-slate-700/40 rounded-xl p-3 space-y-1.5 font-mono text-[11px]">
           <div class="flex justify-between">
-            <span class="text-slate-400">Lat / Lon:</span>
-            <span id="drawerCoords" class="text-slate-200">28.6139°, 77.2090°</span>
+            <span class="text-slate-400">Coordinates:</span>
+            <span id="drawerCoords" class="text-slate-200">28.6139° N, 77.2090° E</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Transponder:</span>
-            <span id="drawerTransponder" class="text-slate-200">Mode-S / ADS-B</span>
+            <span class="text-slate-400">Aircraft / Type:</span>
+            <span id="drawerAircraft" class="text-slate-200">Airbus A321neo</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Squawk / MMSI:</span>
-            <span id="drawerSquawk" class="text-sky-300">4712</span>
+            <span class="text-slate-400">Transponder Mode:</span>
+            <span id="drawerTransponder" class="text-slate-200">Mode-S ADS-B</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Feed Source:</span>
-            <span id="drawerSource" class="text-emerald-400 font-sans font-medium">FlightRadar24 Scraper</span>
+            <span class="text-slate-400">Squawk Code:</span>
+            <span id="drawerSquawk" class="text-amber-400 font-bold">4712</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Scraped Source:</span>
+            <span id="drawerSource" class="text-emerald-400 font-sans font-medium">FlightRadar24 Live Feed</span>
           </div>
         </div>
 
-        <!-- Actions -->
+        <!-- Camera Lock & Trail Buttons -->
         <div class="flex items-center gap-2 pt-1">
           <button id="btnFollowVehicle" class="flex-1 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 font-medium text-white flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-sky-600/30">
             <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
@@ -394,26 +402,26 @@
           </button>
           <button id="btnShowTrail" class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center gap-1.5 transition-colors">
             <i data-lucide="route" class="w-3.5 h-3.5"></i>
-            <span>Trail</span>
+            <span>Route Trail</span>
           </button>
         </div>
       </div>
     </div>
 
     <!-- Backend WebSocket Settings Modal -->
-    <div id="backendModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="backendModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <i data-lucide="server" class="w-5 h-5 text-emerald-400"></i>
-            Heroku Backend WebSocket
+            Heroku Backend Connection
           </h3>
           <button id="btnCloseModal" class="text-slate-400 hover:text-white">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
         <p class="text-xs text-slate-400">
-          Backend WebSocket URL:
+          Connected Live Endpoint:
           <code class="block mt-1 p-2 bg-slate-800 rounded text-emerald-300 font-mono text-[11px] break-all">wss://stdtrack-b2fe4ba0ab18.herokuapp.com/ws/telemetry</code>
         </p>
         <div>
@@ -426,36 +434,33 @@
           />
         </div>
         <div class="flex justify-end gap-2 pt-2">
-          <button id="btnDisconnectWS" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300">
-            Fallback Mode
-          </button>
           <button id="btnSaveWS" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-medium text-white shadow-lg shadow-emerald-600/30">
-            Connect
+            Save & Reconnect
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Floating Legend -->
-    <div class="absolute bottom-6 left-4 z-20 hidden md:flex items-center gap-3.5 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800 shadow-xl text-xs font-mono">
-      <span class="text-slate-400 font-semibold text-[10px] uppercase tracking-wider">HUD:</span>
-      <span class="flex items-center gap-1.5 text-sky-400"><span class="w-2 h-2 rounded-full bg-sky-400 shadow-sm shadow-sky-400"></span> Air</span>
-      <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span> Rail</span>
-      <span class="flex items-center gap-1.5 text-orange-400"><span class="w-2 h-2 rounded-full bg-orange-400 shadow-sm shadow-orange-400"></span> Ship</span>
-      <span class="flex items-center gap-1.5 text-purple-400"><span class="w-2 h-2 rounded-full bg-purple-400 shadow-sm shadow-purple-400"></span> Bus</span>
-      <span class="flex items-center gap-1.5 text-yellow-400"><span class="w-2 h-2 rounded-full bg-yellow-400 shadow-sm shadow-yellow-400"></span> Fleet</span>
+    <!-- Quick Floating Filter / Legend at bottom left -->
+    <div class="absolute bottom-6 left-4 z-20 hidden md:flex items-center gap-3.5 bg-slate-900/95 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800 shadow-xl text-xs font-mono">
+      <span class="text-slate-400 font-bold text-[10px] uppercase tracking-wider">HUD:</span>
+      <span class="flex items-center gap-1.5 text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Air (Low)</span>
+      <span class="flex items-center gap-1.5 text-sky-400"><span class="w-2 h-2 rounded-full bg-sky-400"></span> Air (Cruise)</span>
+      <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Rail</span>
+      <span class="flex items-center gap-1.5 text-orange-400"><span class="w-2 h-2 rounded-full bg-orange-400"></span> Maritime</span>
+      <span class="flex items-center gap-1.5 text-purple-400"><span class="w-2 h-2 rounded-full bg-purple-400"></span> Transit</span>
     </div>
 
-    <!-- Live Event Dispatch Log -->
+    <!-- Live Event Dispatch Log at bottom right -->
     <div class="absolute bottom-6 right-4 z-20 max-w-sm hidden lg:block bg-slate-900/95 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-800 shadow-xl text-xs font-mono">
       <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
-        <span class="flex items-center gap-1 text-sky-400 font-semibold">
-          <i data-lucide="radio" class="w-3 h-3 text-emerald-400 animate-pulse"></i> LIVE AEROSPACE DISPATCH
+        <span class="flex items-center gap-1 text-sky-400 font-bold">
+          <i data-lucide="radio" class="w-3 h-3 text-emerald-400 animate-pulse"></i> LIVE DISPATCH RADAR
         </span>
         <span id="tickerLogTime">JUST NOW</span>
       </div>
       <div id="liveTickerMsg" class="text-slate-200 truncate">
-        ✈️ FlightRadar24 feed connected. Tracking real-time flights & vessels.
+        ✈️ FlightRadar24 live ADS-B vectors active. Tracking real-time flights & vessels.
       </div>
     </div>
   </div>
@@ -468,7 +473,7 @@
 
     lucide.createIcons();
 
-    // Sound FX generator
+    // Web Audio Sound Engine
     class SoundEngine {
       constructor() { this.ctx = null; this.enabled = true; }
       init() {
@@ -509,15 +514,15 @@
     }, 1000);
 
     // =========================================================================
-    // 🗺️ WORLD-CLASS MAP & ZERO-WATERMARK TILE ENGINE
+    // 🗺️ ZERO-WATERMARK WORLD-CLASS MAP TILES
     // =========================================================================
     const map = L.map('map', { 
       zoomControl: false, 
       attributionControl: false 
-    }).setView([23.5, 76.5], 5); // Ideal center over India / Middle East / South Asia
+    }).setView([23.5, 77.0], 5);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // 1. ESRI Tactical Dark Canvas (Military / NORAD style - ZERO watermark)
+    // ESRI Tactical Dark Gray Canvas (Zero Watermark, High-res Military Command look)
     const layerDarkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 16
     });
@@ -527,17 +532,16 @@
     });
     const layerDarkGroup = L.layerGroup([layerDarkBase, layerDarkLabels]).addTo(map);
 
-    // 2. ESRI High-Resolution World Imagery Satellite
+    // ESRI Photorealistic World Imagery Satellite
     const layerSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 18
     });
 
-    // 3. OpenStreetMap Clean Vector
+    // OpenStreetMap Clean Vector
     const layerOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
     });
 
-    // Switch Map Layers
     function setMapTheme(theme) {
       map.removeLayer(layerDarkGroup);
       map.removeLayer(layerSatellite);
@@ -566,60 +570,82 @@
     document.getElementById('btnThemeOSM').addEventListener('click', () => setMapTheme('osm'));
 
     // =========================================================================
-    // 🎨 VEHICLE ICONS & HUD RENDERING
+    // 🛩️ FLIGHTRADAR24-STYLE AIRCRAFT & VEHICLE ICONS
     // =========================================================================
-    const CATEGORY_COLORS = {
-      flight: '#38bdf8', train: '#10b981', ship: '#f97316', bus: '#a855f7', car: '#eab308'
-    };
-
-    function getCategorySVG(cat, color) {
-      if (cat === 'flight') {
-        return `<svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="#070b14" stroke-width="1.5">
-          <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-        </svg>`;
-      } else if (cat === 'train') {
-        return `<svg viewBox="0 0 24 24" width="20" height="20" fill="${color}" stroke="#070b14" stroke-width="1.5">
-          <rect x="4" y="3" width="16" height="15" rx="3"/><line x1="4" y1="10" x2="20" y2="10"/><circle cx="8" cy="14" r="1.5" fill="#070b14"/><circle cx="16" cy="14" r="1.5" fill="#070b14"/><line x1="7" y1="21" x2="10" y2="18"/><line x1="17" y1="21" x2="14" y2="18"/>
-        </svg>`;
-      } else if (cat === 'ship') {
-        return `<svg viewBox="0 0 24 24" width="20" height="20" fill="${color}" stroke="#070b14" stroke-width="1.5">
-          <path d="M2 20a2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1"/><path d="M4 18l-1-5h18l-1 5"/><path d="M6 13V6h5v7"/><path d="M12 9h4v4"/>
-        </svg>`;
-      } else if (cat === 'bus') {
-        return `<svg viewBox="0 0 24 24" width="20" height="20" fill="${color}" stroke="#070b14" stroke-width="1.5">
-          <rect x="4" y="3" width="16" height="15" rx="3"/><line x1="4" y1="8" x2="20" y2="8"/><circle cx="8" cy="14" r="1.5" fill="#070b14"/><circle cx="16" cy="14" r="1.5" fill="#070b14"/><line x1="6" y1="18" x2="6" y2="21"/><line x1="18" y1="18" x2="18" y2="21"/>
-        </svg>`;
-      } else {
-        return `<svg viewBox="0 0 24 24" width="20" height="20" fill="${color}" stroke="#070b14" stroke-width="1.5">
-          <path d="M5 11l2-5h10l2 5"/><rect x="3" y="11" width="18" height="7" rx="2"/><circle cx="7" cy="18" r="2" fill="#070b14"/><circle cx="17" cy="18" r="2" fill="#070b14"/>
-        </svg>`;
-      }
+    
+    // Altitude-based aircraft color
+    function getAircraftColor(alt) {
+      if (alt < 10000) return '#facc15'; // Low altitude takeoff/landing yellow
+      if (alt < 25000) return '#4ade80'; // Climb lime green
+      if (alt < 38000) return '#38bdf8'; // High cruise sky blue
+      return '#c084fc'; // Stratospheric purple
     }
 
-    // State Variables
-    let vehicles = [];
-    let markers = new Map();
-    let activeCategories = new Set(['flight', 'train', 'ship', 'bus', 'car']);
-    let selectedVehicle = null;
-    let vehicleTrailLayer = null;
-    let targetReticleLayer = null;
-    let cameraFollowInterval = null;
-    let ws = null;
-    let localSimInterval = null;
+    // Realistic vector aircraft silhouette
+    function getAirplaneSVG(alt, isSelected) {
+      const color = getAircraftColor(alt);
+      const stroke = isSelected ? '#ffffff' : '#020617';
+      const strokeWidth = isSelected ? '2' : '1.2';
+      return `<svg viewBox="0 0 24 24" width="24" height="24" fill="${color}" stroke="${stroke}" stroke-width="${strokeWidth}">
+        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+      </svg>`;
+    }
 
-    function createVehicleIcon(v, isSelected = false) {
-      const color = CATEGORY_COLORS[v.category];
-      const svg = getCategorySVG(v.category, color);
-      const reticleClass = isSelected ? 'target-reticle ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-900 rounded-full' : '';
+    // Modern Bullet Train SVG
+    function getTrainSVG(isSelected) {
+      const color = '#10b981';
+      return `<svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="#020617" stroke-width="1.2">
+        <rect x="4" y="3" width="16" height="15" rx="4" />
+        <line x1="4" y1="10" x2="20" y2="10" stroke="#020617" stroke-width="1.5" />
+        <circle cx="8" cy="14" r="1.5" fill="#020617"/>
+        <circle cx="16" cy="14" r="1.5" fill="#020617"/>
+        <line x1="7" y1="21" x2="10" y2="18"/>
+        <line x1="17" y1="21" x2="14" y2="18"/>
+      </svg>`;
+    }
+
+    // Cargo/Vessel Ship Hull SVG
+    function getShipSVG(isSelected) {
+      const color = '#f97316';
+      return `<svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="#020617" stroke-width="1.2">
+        <path d="M2 20a2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1"/>
+        <path d="M4 18l-1-5h18l-1 5"/>
+        <path d="M6 13V6h5v7"/>
+        <path d="M12 9h4v4"/>
+      </svg>`;
+    }
+
+    // Bus SVG
+    function getBusSVG() {
+      return `<svg viewBox="0 0 24 24" width="20" height="20" fill="#a855f7" stroke="#020617" stroke-width="1.2">
+        <rect x="4" y="3" width="16" height="15" rx="3"/><line x1="4" y1="8" x2="20" y2="8" stroke="#020617"/><circle cx="8" cy="14" r="1.5" fill="#020617"/><circle cx="16" cy="14" r="1.5" fill="#020617"/><line x1="6" y1="18" x2="6" y2="21"/><line x1="18" y1="18" x2="18" y2="21"/>
+      </svg>`;
+    }
+
+    // Car SVG
+    function getCarSVG() {
+      return `<svg viewBox="0 0 24 24" width="20" height="20" fill="#ec4899" stroke="#020617" stroke-width="1.2">
+        <path d="M5 11l2-5h10l2 5"/><rect x="3" y="11" width="18" height="7" rx="2"/><circle cx="7" cy="18" r="2" fill="#020617"/><circle cx="17" cy="18" r="2" fill="#020617"/>
+      </svg>`;
+    }
+
+    function createVehicleIcon(v, isSelected) {
+      let svg = '';
+      if (v.category === 'flight') svg = getAirplaneSVG(v.altitude || 30000, isSelected);
+      else if (v.category === 'train') svg = getTrainSVG(isSelected);
+      else if (v.category === 'ship') svg = getShipSVG(isSelected);
+      else if (v.category === 'bus') svg = getBusSVG();
+      else svg = getCarSVG();
+
+      const lockEffect = isSelected ? 'target-locked ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-900 rounded-full' : '';
 
       return L.divIcon({
         className: 'custom-vehicle-marker',
         html: `
-          <div class="vehicle-icon-wrap flex items-center justify-center relative cursor-pointer ${reticleClass}" style="transform: rotate(${v.heading}deg);">
-            <div class="p-1 rounded-full bg-slate-950/90 border border-slate-700/80 shadow-xl hover:scale-125 transition-transform">
+          <div class="vehicle-icon-wrap flex items-center justify-center relative cursor-pointer ${lockEffect}" style="transform: rotate(${v.heading}deg);">
+            <div class="p-1 rounded-full bg-slate-950/90 border border-slate-700/80 shadow-2xl hover:scale-125 transition-transform">
               ${svg}
             </div>
-            <div class="absolute -top-1 -right-1 w-2 h-2 rounded-full shadow-sm" style="background-color: ${color};"></div>
           </div>
         `,
         iconSize: [30, 30],
@@ -627,13 +653,48 @@
       });
     }
 
-    // Tactical HUD Tooltip Content on Hover
+    // =========================================================================
+    // 🧠 STATE MANAGEMENT & SMART LEVEL OF DETAIL (LOD)
+    // =========================================================================
+    let currentMode = 'all'; // 'all' | 'flight' | 'ship' | 'train' | 'transit'
+    let vehicles = [];
+    let markers = new Map();
+    let selectedVehicle = null;
+    let vehicleTrailLayer = null;
+    let cameraFollowInterval = null;
+    let ws = null;
+
+    // Smart Level of Detail Filter:
+    // If in "flight" mode -> only flights
+    // If in "ship" mode -> only ships
+    // If in "train" mode -> only trains
+    // If in "transit" mode -> only buses & cars
+    // If in "all" mode:
+    //   -> When zoomed out (zoom < 7): show flights, ships, major trains. Hide city buses/cars to prevent cluttered screen!
+    //   -> When zoomed in (zoom >= 7): show city buses and cars!
+    function isVehicleVisible(v) {
+      const zoom = map.getZoom();
+
+      if (currentMode === 'flight') return v.category === 'flight';
+      if (currentMode === 'ship') return v.category === 'ship';
+      if (currentMode === 'train') return v.category === 'train';
+      if (currentMode === 'transit') return v.category === 'bus' || v.category === 'car';
+
+      // 'all' mode: Smart zoom filtering
+      if (v.category === 'bus' || v.category === 'car') {
+        return zoom >= 7; // Only show local transit when zoomed into a city!
+      }
+      return true;
+    }
+
+    // Hover Tooltip
     function createTooltipContent(v) {
       const altStr = v.category === 'flight' ? `${v.altitude.toLocaleString()} ft` : `${v.altitude} m`;
+      const catIcon = v.category === 'flight' ? '✈️' : v.category === 'ship' ? '🚢' : v.category === 'train' ? '🚆' : '🚌';
       return `
         <div class="space-y-1 font-mono text-left">
           <div class="flex items-center gap-2 border-b border-slate-700/60 pb-1">
-            <span class="font-bold text-sky-400 text-xs">${v.id}</span>
+            <span class="font-black text-sky-400 text-xs">${catIcon} ${v.id}</span>
             <span class="text-[10px] text-slate-300 font-sans">${v.operator}</span>
           </div>
           <div class="flex items-center gap-3 text-[10px] text-slate-300 pt-0.5">
@@ -649,18 +710,18 @@
     }
 
     function renderMarkers() {
-      // Remove orphaned markers
+      // Clean up orphaned or hidden markers
       for (const [id, marker] of markers.entries()) {
         const v = vehicles.find(item => item.id === id);
-        if (!v || !activeCategories.has(v.category)) {
+        if (!v || !isVehicleVisible(v)) {
           map.removeLayer(marker);
           markers.delete(id);
         }
       }
 
-      // Add/update markers
+      // Add / Update
       vehicles.forEach(v => {
-        if (!activeCategories.has(v.category)) return;
+        if (!isVehicleVisible(v)) return;
         const isSelected = selectedVehicle && selectedVehicle.id === v.id;
 
         if (markers.has(v.id)) {
@@ -670,40 +731,58 @@
           marker.setTooltipContent(createTooltipContent(v));
         } else {
           const marker = L.marker([v.lat, v.lon], { icon: createVehicleIcon(v, isSelected) });
-          
-          // Tactical Tooltip
           marker.bindTooltip(createTooltipContent(v), {
             className: 'tactical-tooltip',
             direction: 'top',
             offset: [0, -12],
             opacity: 0.98
           });
-
           marker.on('click', () => {
             selectVehicle(v);
-            sound.beep(720, 0.08);
+            sound.beep(750, 0.08);
           });
           marker.addTo(map);
           markers.set(v.id, marker);
         }
       });
-      updateBadges();
+
+      updateCounts();
     }
 
-    function updateBadges() {
+    function updateCounts() {
       const counts = { flight: 0, train: 0, ship: 0, bus: 0, car: 0 };
       vehicles.forEach(v => { if (counts[v.category] !== undefined) counts[v.category]++; });
-      document.getElementById('badgeFlight').textContent = counts.flight;
-      document.getElementById('badgeTrain').textContent = counts.train;
-      document.getElementById('badgeShip').textContent = counts.ship;
-      document.getElementById('badgeBus').textContent = counts.bus;
-      document.getElementById('badgeCar').textContent = counts.car;
-      document.getElementById('totalActiveCount').textContent = vehicles.filter(v => activeCategories.has(v.category)).length;
+
+      document.getElementById('countAll').textContent = vehicles.length;
+      document.getElementById('countFlight').textContent = counts.flight;
+      document.getElementById('countShip').textContent = counts.ship;
+      document.getElementById('countTrain').textContent = counts.train;
+      document.getElementById('countTransit').textContent = counts.bus + counts.car;
     }
 
-    // Auto-fit all active vehicles
+    // Re-render when map zooms (Level of detail changes)
+    map.on('zoomend', () => renderMarkers());
+
+    // Switch Dedicated Modes
+    document.querySelectorAll('.mode-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab-btn').forEach(b => {
+          b.classList.remove('active', 'border-sky-500/50', 'bg-sky-950/70', 'text-sky-200');
+          b.classList.add('border-slate-700', 'bg-slate-900/60', 'text-slate-300');
+        });
+        btn.classList.add('active', 'border-sky-500/50', 'bg-sky-950/70', 'text-sky-200');
+        btn.classList.remove('border-slate-700', 'bg-slate-900/60', 'text-slate-300');
+
+        currentMode = btn.getAttribute('data-mode');
+        document.getElementById('activeModeBadge').textContent = currentMode.toUpperCase() + ' MODE';
+        sound.beep(650, 0.05);
+        renderMarkers();
+      });
+    });
+
+    // Auto Fit Bounds
     document.getElementById('btnFitBounds').addEventListener('click', () => {
-      const visible = vehicles.filter(v => activeCategories.has(v.category));
+      const visible = vehicles.filter(v => isVehicleVisible(v));
       if (visible.length === 0) return;
       const bounds = L.latLngBounds(visible.map(v => [v.lat, v.lon]));
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 8, animate: true });
@@ -714,20 +793,16 @@
     // 📡 WEBSOCKET STREAM CONNECTOR (HEROKU LIVE)
     // =========================================================================
     function connectBackendWebSocket(url) {
-      if (ws) {
-        ws.close();
-        ws = null;
-      }
+      if (ws) { ws.close(); ws = null; }
       try {
         ws = new WebSocket(url);
-        document.getElementById('backendStatusText').textContent = "Connecting...";
+        document.getElementById('backendStatusText').textContent = "Connecting Heroku...";
         document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
 
         ws.onopen = () => {
-          document.getElementById('backendStatusText').textContent = "Heroku Live Connected";
+          document.getElementById('backendStatusText').textContent = "Heroku Live Stream Connected";
           document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-emerald-400";
-          document.getElementById('streamSourceLabel').textContent = "Heroku Scraped Stream";
-          sound.beep(980, 0.1);
+          sound.beep(960, 0.1);
         };
 
         ws.onmessage = (event) => {
@@ -744,11 +819,7 @@
           } catch (e) {}
         };
 
-        ws.onerror = () => {
-          console.warn("WebSocket error. Retrying in 5s...");
-          fallbackState();
-        };
-
+        ws.onerror = () => fallbackState();
         ws.onclose = () => {
           fallbackState();
           setTimeout(() => connectBackendWebSocket(url), 5000);
@@ -775,10 +846,6 @@
       }
       backendModal.classList.add('hidden');
     });
-    document.getElementById('btnDisconnectWS').addEventListener('click', () => {
-      if (ws) ws.close();
-      backendModal.classList.add('hidden');
-    });
 
     // Auto connect Heroku WS URL on load
     const activeWs = localStorage.getItem('std_track_ws_url') || HEROKU_BACKEND_WS_URL;
@@ -795,15 +862,9 @@
       const drawer = document.getElementById('inspectorDrawer');
       drawer.classList.remove('hidden');
 
-      const color = CATEGORY_COLORS[v.category];
-      document.getElementById('drawerIconWrapper').style.borderColor = color;
-      document.getElementById('drawerIconWrapper').style.color = color;
-      document.getElementById('drawerBadge').textContent = v.category.toUpperCase();
-      document.getElementById('drawerBadge').style.backgroundColor = `${color}25`;
-      document.getElementById('drawerBadge').style.color = color;
-
       document.getElementById('drawerCallsign').textContent = v.id;
       document.getElementById('drawerOperator').textContent = v.operator;
+      document.getElementById('drawerBadge').textContent = v.category.toUpperCase();
       document.getElementById('drawerOriginCode').textContent = v.origin.code;
       document.getElementById('drawerOriginCity').textContent = v.origin.city;
       document.getElementById('drawerDestCode').textContent = v.dest.code;
@@ -816,10 +877,10 @@
       document.getElementById('drawerAltitudeUnit').textContent = v.category === 'flight' ? 'ft' : 'elev';
       document.getElementById('drawerHeading').textContent = `${v.heading}°`;
       document.getElementById('drawerCompassNeedle').style.transform = `rotate(${v.heading}deg)`;
-      document.getElementById('drawerFuel').textContent = `${v.fuel || 85}%`;
       document.getElementById('drawerCoords').textContent = `${v.lat.toFixed(4)}°, ${v.lon.toFixed(4)}°`;
+      document.getElementById('drawerAircraft').textContent = v.aircraft || "Commercial Model";
       document.getElementById('drawerSquawk').textContent = v.squawk || "4701";
-      document.getElementById('drawerTransponder').textContent = v.transponder || "ADS-B Mode-S";
+      document.getElementById('drawerTransponder').textContent = v.transponder || "Mode-S ADS-B";
       document.getElementById('drawerSource').textContent = v.source || "Live Scraper";
 
       const catIcon = document.getElementById('drawerCategoryIcon');
@@ -844,9 +905,8 @@
 
     function drawVehicleTrail(v) {
       if (vehicleTrailLayer) map.removeLayer(vehicleTrailLayer);
-      const color = CATEGORY_COLORS[v.category];
+      const color = v.category === 'flight' ? '#38bdf8' : v.category === 'ship' ? '#f97316' : '#10b981';
       
-      // Great circle / route line
       const latlngs = [
         [v.origin.lat, v.origin.lon],
         [v.lat, v.lon],
@@ -887,25 +947,7 @@
       }
     });
 
-    // Category Buttons Filter
-    document.querySelectorAll('.category-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const cat = btn.getAttribute('data-category');
-        if (activeCategories.has(cat)) {
-          activeCategories.delete(cat);
-          btn.classList.remove('active');
-          btn.classList.add('opacity-40');
-        } else {
-          activeCategories.add(cat);
-          btn.classList.add('active');
-          btn.classList.remove('opacity-40');
-        }
-        sound.beep(520, 0.04);
-        renderMarkers();
-      });
-    });
-
-    // Global Search Bar
+    // Global Search
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
     searchInput.addEventListener('input', (e) => {
@@ -922,7 +964,7 @@
       searchResults.innerHTML = matches.map(m => `
         <div class="search-item p-2.5 hover:bg-slate-800 border-b border-slate-800/80 cursor-pointer flex items-center justify-between" data-id="${m.id}">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full" style="background-color: ${CATEGORY_COLORS[m.category]}"></span>
+            <span class="w-2 h-2 rounded-full" style="background-color: ${m.category === 'flight' ? '#eab308' : '#10b981'}"></span>
             <div class="font-bold font-mono text-slate-100 text-xs">${m.id} <span class="text-slate-400 font-normal">(${m.operator})</span></div>
           </div>
           <span class="text-[10px] font-mono text-sky-400 uppercase font-semibold px-2 py-0.5 rounded bg-slate-800">${m.category}</span>
@@ -945,7 +987,7 @@
       });
     });
 
-    // Initial render
+    // Render initial
     renderMarkers();
   </script>
 </body>
