@@ -454,7 +454,7 @@
     const map = L.map('map', { 
       zoomControl: false, 
       attributionControl: false 
-    }).setView([20.0, 10.0], 3); // Global initial view
+    }).setView([22.5, 79.0], 5); // Centered over India subcontinent
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     const layerDarkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 });
