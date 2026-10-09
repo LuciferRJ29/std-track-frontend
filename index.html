@@ -45,33 +45,6 @@
       background-color: #1e293b !important;
       color: #38bdf8 !important;
     }
-    
-    .leaflet-tooltip.tactical-tooltip {
-      background: rgba(10, 15, 29, 0.98) !important;
-      border: 1px solid rgba(56, 189, 248, 0.5) !important;
-      border-radius: 0.85rem !important;
-      color: #f8fafc !important;
-      box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.9), 0 0 25px rgba(56, 189, 248, 0.2) !important;
-      padding: 8px 12px !important;
-      backdrop-filter: blur(14px);
-    }
-    .leaflet-tooltip-top:before {
-      border-top-color: rgba(10, 15, 29, 0.98) !important;
-    }
-
-    @keyframes target-pulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8); }
-      70% { transform: scale(1.15); box-shadow: 0 0 0 9px rgba(56, 189, 248, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
-    }
-    .target-locked {
-      animation: target-pulse 1.5s infinite;
-    }
-
-    .vehicle-icon-wrap {
-      transition: transform 0.4s linear;
-      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.95));
-    }
 
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #060a14; }
@@ -99,12 +72,12 @@
           </h1>
           <span class="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            GLOBAL
+            GLOBAL MATRIX
           </span>
         </div>
         <p class="text-[11px] text-slate-400 flex items-center gap-1.5">
           <span id="backendStatusDot" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span id="backendStatusText" class="truncate max-w-[150px] sm:max-w-none">Heroku Stream Online</span>
+          <span id="backendStatusText" class="truncate max-w-[150px] sm:max-w-none">Live Telemetry 60 FPS</span>
         </p>
       </div>
     </div>
@@ -113,10 +86,13 @@
     <div class="hidden lg:flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-medium">
       <span class="text-[10px] text-slate-500 font-bold px-2 uppercase font-mono">Jump:</span>
       <button data-region="world" class="region-jump-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">🌍 World</button>
-      <button data-region="india" class="region-jump-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">🇮🇳 India</button>
+      <button data-region="india" class="region-jump-btn px-2.5 py-1 rounded-lg text-sky-400 font-semibold hover:bg-slate-800 transition-colors">🇮🇳 India</button>
       <button data-region="europe" class="region-jump-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">🇪🇺 Europe</button>
       <button data-region="usa" class="region-jump-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">🇺🇸 USA</button>
       <button data-region="japan" class="region-jump-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">🇯🇵 Japan</button>
+      <button data-region="gulf" class="region-jump-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">🇦🇪 Gulf</button>
+      <button data-region="australia" class="region-jump-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">🇦🇺 Australia</button>
+      <button data-region="south_america" class="region-jump-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">🇧🇷 S.America</button>
     </div>
 
     <!-- Center Search Bar -->
@@ -124,10 +100,10 @@
       <div class="relative">
         <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
         <input 
-          id="searchInput"
+          id="searchInput" 
           type="text" 
-          placeholder="Search Shinkansen, Eurostar, Flight, Bus..."
-          class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-14 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-all"
+          placeholder="Search Callsign, Airline, Train, Ship, City..." 
+          class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-14 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-all font-mono"
         />
         <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-1 bg-slate-900/98 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto z-50"></div>
       </div>
@@ -201,17 +177,17 @@
       <button data-mode="transit" class="mode-tab-btn px-3 py-1 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-purple-300 hover:bg-slate-800 transition-all flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-purple-400"></span>
         <i data-lucide="bus" class="w-3.5 h-3.5 text-purple-400"></i>
-        <span>Intercity Buses (<span id="countTransit">0</span>)</span>
+        <span>Intercity Transit (<span id="countTransit">0</span>)</span>
       </button>
     </div>
 
     <!-- Altitude Legend -->
     <div class="hidden xl:flex items-center gap-2 text-[11px] font-mono text-slate-400 shrink-0">
-      <span class="text-slate-500 font-bold">ALT:</span>
-      <span class="text-amber-400">&lt;10k ft</span>
-      <span class="text-emerald-400">10-25k ft</span>
-      <span class="text-sky-400">25-38k ft</span>
-      <span class="text-purple-400">&gt;38k ft</span>
+      <span class="text-slate-500 font-bold">ALTITUDE:</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>&lt;10k ft</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>10-25k ft</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-400"></span>25-38k ft</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-400"></span>&gt;38k ft</span>
     </div>
   </div>
 
@@ -225,7 +201,7 @@
       <div class="p-3.5 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h2 class="font-black text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="globe" class="w-3.5 h-3.5 text-sky-400"></i> Worldwide Live Departures
+            <i data-lucide="globe" class="w-3.5 h-3.5 text-sky-400"></i> Worldwide Live Fleet
           </h2>
           <p class="text-[10px] text-slate-400">Click any card to fly camera to location</p>
         </div>
@@ -242,6 +218,11 @@
     <div class="relative flex-1 h-full w-full overflow-hidden">
       <div id="map" class="w-full h-full z-0"></div>
 
+      <!-- Floating Tactical HUD Tooltip -->
+      <div id="tacticalHUDTooltip" class="hidden pointer-events-none fixed z-50 bg-[#070c18fa] border border-sky-400/60 rounded-xl px-3 py-2 text-white shadow-2xl backdrop-blur-xl font-mono text-xs select-none">
+        <!-- Rendered dynamically -->
+      </div>
+
       <!-- Active Vehicle Inspector Drawer (Slide-in) -->
       <div id="inspectorDrawer" class="hidden absolute top-4 left-4 z-20 w-84 sm:w-96 max-h-[calc(100vh-140px)] bg-slate-900/98 backdrop-blur-2xl border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300">
         <div id="drawerHeaderBg" class="p-4 bg-gradient-to-r from-sky-950/90 via-slate-900 to-slate-900 border-b border-slate-800 flex items-start justify-between">
@@ -251,103 +232,85 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span id="drawerCallsign" class="text-lg font-black font-mono text-white tracking-wider">AI-161</span>
-                <span id="drawerBadge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase bg-sky-800/80 text-sky-200">AIR</span>
+                <h3 id="drawerCallsign" class="font-mono font-black text-lg text-white tracking-tight">AI-101</h3>
+                <span id="drawerBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-950 border border-sky-500/40 text-sky-300">FLIGHT</span>
               </div>
-              <div id="drawerOperator" class="text-xs text-slate-300 font-medium mt-0.5">Air India Express</div>
+              <p id="drawerOperator" class="text-xs text-slate-300 font-medium">Air India</p>
             </div>
           </div>
-          <button id="btnCloseDrawer" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors">
+          <button id="btnCloseDrawer" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
 
-        <div class="p-4 space-y-4 overflow-y-auto text-xs">
-          <!-- Route Banner -->
-          <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3.5">
-            <div class="flex items-center justify-between text-slate-300 font-mono text-xs mb-2">
-              <div>
-                <div id="drawerOriginCode" class="font-black text-base text-sky-400">DEL</div>
-                <div id="drawerOriginCity" class="text-[10px] text-slate-400 truncate max-w-[90px]">Delhi</div>
+        <div class="p-4 overflow-y-auto space-y-4 text-xs font-mono">
+          <!-- Route corridor -->
+          <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pb-1">
+              <span>ORIGIN</span>
+              <span class="text-sky-400">➔ EN ROUTE ➔</span>
+              <span>DESTINATION</span>
+            </div>
+            <div class="flex items-center justify-between font-bold text-sm text-slate-100 pt-1">
+              <div class="text-left">
+                <div id="drawerOriginCode" class="text-sky-300">DEL</div>
+                <div id="drawerOriginCity" class="text-[10px] font-normal text-slate-400 font-sans truncate max-w-[100px]">Delhi</div>
               </div>
-              <div class="flex flex-col items-center flex-1 px-4">
-                <i id="drawerRouteIcon" data-lucide="plane" class="w-4 h-4 text-amber-400"></i>
-                <div class="w-full h-1.5 bg-slate-700 rounded-full mt-1.5 overflow-hidden">
-                  <div id="drawerProgressBar" class="h-full bg-gradient-to-r from-sky-500 to-amber-400 rounded-full" style="width: 58%"></div>
-                </div>
-              </div>
+              <i data-lucide="arrow-right" class="w-4 h-4 text-slate-500"></i>
               <div class="text-right">
-                <div id="drawerDestCode" class="font-black text-base text-sky-400">BOM</div>
-                <div id="drawerDestCity" class="text-[10px] text-slate-400 truncate max-w-[90px]">Mumbai</div>
-              </div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-700/50">
-              <span>Status: <strong id="drawerStatusText" class="text-emerald-400">Cruising On Time</strong></span>
-              <span>ETA: <strong id="drawerETA" class="text-slate-200">18:45 UTC</strong></span>
-            </div>
-          </div>
-
-          <!-- Gauges -->
-          <div class="grid grid-cols-2 gap-2.5">
-            <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
-              <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1 font-mono">
-                <i data-lucide="gauge" class="w-3.5 h-3.5 text-amber-400"></i> Speed
-              </div>
-              <div class="mt-1 flex items-baseline gap-1">
-                <span id="drawerSpeed" class="text-xl font-black font-mono text-white">840</span>
-                <span id="drawerSpeedUnit" class="text-xs text-slate-400">km/h</span>
-              </div>
-            </div>
-
-            <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
-              <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1 font-mono">
-                <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i> Altitude / Level
-              </div>
-              <div class="mt-1 flex items-baseline gap-1">
-                <span id="drawerAltitude" class="text-xl font-black font-mono text-white">36,000</span>
-                <span id="drawerAltitudeUnit" class="text-xs text-slate-400">ft</span>
-              </div>
-            </div>
-
-            <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
-              <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1 font-mono">
-                <i data-lucide="compass" class="w-3.5 h-3.5 text-sky-400"></i> Heading
-              </div>
-              <div class="mt-1 flex items-center gap-2">
-                <div id="drawerCompassNeedle" class="w-4 h-4 text-sky-400 transition-transform">
-                  <i data-lucide="navigation" class="w-4 h-4 fill-sky-400"></i>
-                </div>
-                <span id="drawerHeading" class="text-xl font-black font-mono text-white">214°</span>
-              </div>
-            </div>
-
-            <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-2.5">
-              <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1 font-mono">
-                <i data-lucide="activity" class="w-3.5 h-3.5 text-purple-400"></i> Power / Fuel
-              </div>
-              <div class="mt-1 flex items-baseline gap-1">
-                <span id="drawerFuel" class="text-lg font-bold font-mono text-emerald-400">Optimal</span>
+                <div id="drawerDestCode" class="text-amber-300">JFK</div>
+                <div id="drawerDestCity" class="text-[10px] font-normal text-slate-400 font-sans truncate max-w-[100px]">New York</div>
               </div>
             </div>
           </div>
 
-          <!-- Avionics / Hardware Details -->
-          <div class="bg-slate-800/30 border border-slate-700/40 rounded-xl p-3 space-y-1.5 font-mono text-[11px]">
+          <!-- Key Metrics Grid -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div class="text-[10px] text-slate-400 uppercase">Speed</div>
+              <div class="text-base font-bold text-amber-400 mt-0.5">
+                <span id="drawerSpeed">880</span> <span id="drawerSpeedUnit" class="text-[10px] text-slate-400 font-normal">km/h</span>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div class="text-[10px] text-slate-400 uppercase">Altitude</div>
+              <div class="text-base font-bold text-sky-400 mt-0.5">
+                <span id="drawerAltitude">34,000</span> <span id="drawerAltitudeUnit" class="text-[10px] text-slate-400 font-normal">ft</span>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div class="text-[10px] text-slate-400 uppercase">Heading</div>
+              <div class="text-base font-bold text-slate-200 mt-0.5 flex items-center gap-1.5">
+                <span id="drawerHeading">275°</span>
+                <i data-lucide="navigation" id="drawerCompassNeedle" class="w-3.5 h-3.5 text-sky-400 transition-transform duration-300 inline-block"></i>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div class="text-[10px] text-slate-400 uppercase">Status</div>
+              <div id="drawerStatusText" class="text-xs font-bold text-emerald-400 mt-1 truncate">Airborne</div>
+            </div>
+          </div>
+
+          <!-- Technical Specs -->
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] space-y-1.5">
             <div class="flex justify-between">
-              <span class="text-slate-400">Coordinates:</span>
-              <span id="drawerCoords" class="text-slate-200">28.6139° N, 77.2090° E</span>
+              <span class="text-slate-400">Position:</span>
+              <span id="drawerCoords" class="text-slate-200">28.5500°, 77.1000°</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">Hardware / Transponder:</span>
-              <span id="drawerTransponder" class="text-slate-200">Mode-S ADS-B</span>
+              <span class="text-slate-400">Transponder / Squawk:</span>
+              <span id="drawerSquawk" class="text-amber-400">4701</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">Squawk Code:</span>
-              <span id="drawerSquawk" class="text-amber-400 font-bold">4712</span>
+              <span class="text-slate-400">Protocol:</span>
+              <span id="drawerTransponder" class="text-sky-300">Mode-S ADS-B</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">Telemetry Feed:</span>
-              <span id="drawerSource" class="text-emerald-400 font-sans font-medium">FlightRadar24 Feed</span>
+              <span class="text-slate-400">Data Source:</span>
+              <span id="drawerSource" class="text-emerald-400">FlightRadar24 Feed</span>
             </div>
           </div>
 
@@ -402,8 +365,9 @@
 
   <script>
     // =========================================================================
-    // ⚙️ HEROKU BACKEND CONFIGURATION
-    const HEROKU_BACKEND_WS_URL = "wss://stdtrack-b2fe4ba0ab18.herokuapp.com/ws/telemetry"; 
+    // ⚙️ HEROKU BACKEND LIVE ENDPOINTS
+    const HEROKU_BACKEND_HTTP_URL = "https://stdtrack-b2fe4ba0ab18.herokuapp.com/api/vehicles";
+    const HEROKU_BACKEND_WS_URL   = "wss://stdtrack-b2fe4ba0ab18.herokuapp.com/ws/telemetry"; 
     // =========================================================================
 
     lucide.createIcons();
@@ -499,7 +463,10 @@
       india: { center: [22.0, 78.5], zoom: 5 },
       europe: { center: [49.5, 9.5], zoom: 5 },
       usa: { center: [38.5, -96.5], zoom: 4.5 },
-      japan: { center: [35.5, 137.5], zoom: 6 }
+      japan: { center: [35.5, 137.5], zoom: 6 },
+      gulf: { center: [25.0, 52.0], zoom: 5.5 },
+      australia: { center: [-25.0, 134.0], zoom: 4.5 },
+      south_america: { center: [-15.0, -56.0], zoom: 4 }
     };
 
     document.querySelectorAll('.region-jump-btn').forEach(btn => {
@@ -513,165 +480,398 @@
     });
 
     // =========================================================================
-    // 🛩️ FLIGHTRADAR24-STYLE AIRCRAFT & VEHICLE ICONS
-    // =========================================================================
-    function getAircraftColor(alt) {
-      if (alt < 10000) return '#facc15'; // Yellow
-      if (alt < 25000) return '#4ade80'; // Green
-      if (alt < 38000) return '#38bdf8'; // Blue
-      return '#c084fc'; // Purple
-    }
-
-    function getAirplaneSVG(alt, isSelected) {
-      const color = getAircraftColor(alt);
-      const stroke = isSelected ? '#ffffff' : '#020617';
-      const strokeWidth = isSelected ? '2' : '1.2';
-      return `<svg viewBox="0 0 24 24" width="22" height="22" fill="${color}" stroke="${stroke}" stroke-width="${strokeWidth}">
-        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-      </svg>`;
-    }
-
-    function getTrainSVG() {
-      return `<svg viewBox="0 0 24 24" width="22" height="22" fill="#10b981" stroke="#020617" stroke-width="1.2">
-        <rect x="4" y="3" width="16" height="15" rx="4" />
-        <line x1="4" y1="10" x2="20" y2="10" stroke="#020617" stroke-width="1.5" />
-        <circle cx="8" cy="14" r="1.5" fill="#020617"/>
-        <circle cx="16" cy="14" r="1.5" fill="#020617"/>
-        <line x1="7" y1="21" x2="10" y2="18"/>
-        <line x1="17" y1="21" x2="14" y2="18"/>
-      </svg>`;
-    }
-
-    function getShipSVG() {
-      return `<svg viewBox="0 0 24 24" width="22" height="22" fill="#f97316" stroke="#020617" stroke-width="1.2">
-        <path d="M2 20a2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1"/>
-        <path d="M4 18l-1-5h18l-1 5"/>
-        <path d="M6 13V6h5v7"/>
-        <path d="M12 9h4v4"/>
-      </svg>`;
-    }
-
-    function getBusSVG() {
-      return `<svg viewBox="0 0 24 24" width="20" height="20" fill="#a855f7" stroke="#020617" stroke-width="1.2">
-        <rect x="4" y="3" width="16" height="15" rx="3"/><line x1="4" y1="8" x2="20" y2="8" stroke="#020617"/><circle cx="8" cy="14" r="1.5" fill="#020617"/><circle cx="16" cy="14" r="1.5" fill="#020617"/><line x1="6" y1="18" x2="6" y2="21"/><line x1="18" y1="18" x2="18" y2="21"/>
-      </svg>`;
-    }
-
-    function createVehicleIcon(v, isSelected) {
-      let svg = '';
-      if (v.category === 'flight') svg = getAirplaneSVG(v.altitude || 30000, isSelected);
-      else if (v.category === 'train') svg = getTrainSVG();
-      else if (v.category === 'ship') svg = getShipSVG();
-      else svg = getBusSVG();
-
-      const lockEffect = isSelected ? 'target-locked ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-900 rounded-full' : '';
-
-      return L.divIcon({
-        className: 'custom-vehicle-marker',
-        html: `
-          <div class="vehicle-icon-wrap flex items-center justify-center relative cursor-pointer ${lockEffect}" style="transform: rotate(${v.heading}deg);">
-            <div class="p-1 rounded-full bg-slate-950/90 border border-slate-700/80 shadow-2xl hover:scale-125 transition-transform">
-              ${svg}
-            </div>
-          </div>
-        `,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14]
-      });
-    }
-
-    // =========================================================================
-    // 🧠 STATE MANAGEMENT
+    // 🧠 FLEET STATE & CANVAS HIGH-PERFORMANCE RENDERER
     // =========================================================================
     let currentMode = 'all';
     let vehicles = [];
-    let markers = new Map();
     let selectedVehicle = null;
+    let hoveredVehicle = null;
     let vehicleTrailLayer = null;
     let cameraFollowInterval = null;
     let ws = null;
+
+    // Attach high-performance HTML5 Canvas layer
+    const canvas = document.createElement('canvas');
+    canvas.id = 'fleetRadarCanvas';
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '450';
+    map.getContainer().appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let dpr = window.devicePixelRatio || 1;
+    function resizeCanvas() {
+      const container = map.getContainer();
+      const rect = container.getBoundingClientRect();
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    map.on('resize', resizeCanvas);
 
     function isVehicleVisible(v) {
       if (currentMode === 'flight') return v.category === 'flight';
       if (currentMode === 'train') return v.category === 'train';
       if (currentMode === 'ship') return v.category === 'ship';
       if (currentMode === 'transit') return v.category === 'bus' || v.category === 'car';
-      return true; // 'all' mode shows everything worldwide!
+      return true; // 'all' mode shows entire worldwide transport network
     }
 
-    function createTooltipContent(v) {
-      const altStr = v.category === 'flight' ? `${v.altitude.toLocaleString()} ft` : `${v.altitude} m`;
-      const catIcon = v.category === 'flight' ? '✈️' : v.category === 'train' ? '🚄' : v.category === 'ship' ? '🚢' : '🚌';
-      return `
-        <div class="space-y-1 font-mono text-left">
-          <div class="flex items-center gap-2 border-b border-slate-700/60 pb-1">
-            <span class="font-black text-sky-400 text-xs">${catIcon} ${v.id}</span>
-            <span class="text-[10px] text-slate-300 font-sans">${v.operator}</span>
-          </div>
-          <div class="flex items-center gap-3 text-[10px] text-slate-300 pt-0.5">
-            <span>Alt: <strong class="text-emerald-400">${altStr}</strong></span>
-            <span>Spd: <strong class="text-amber-400">${v.speed} km/h</strong></span>
-            <span>Hdg: <strong>${v.heading}°</strong></span>
-          </div>
-          <div class="text-[9px] text-slate-400 font-sans">
-            <strong>${v.origin.city}</strong> ➔ <strong>${v.dest.city}</strong>
-          </div>
-        </div>
-      `;
+    // =========================================================================
+    // 🎨 VECTOR DRAWING FUNCTIONS (HARDWARE-ACCELERATED 2D CANVAS)
+    // =========================================================================
+    function getAircraftColor(alt) {
+      if (alt < 10000) return '#facc15'; // Amber
+      if (alt < 25000) return '#4ade80'; // Emerald
+      if (alt < 38000) return '#38bdf8'; // Tactical Sky Blue
+      return '#c084fc'; // Electric Violet
     }
 
-    function renderMarkers() {
-      for (const [id, marker] of markers.entries()) {
-        const v = vehicles.find(item => item.id === id);
-        if (!v || !isVehicleVisible(v)) {
-          map.removeLayer(marker);
-          markers.delete(id);
+    function drawAircraft(ctx, x, y, heading, alt, isSelected, isHovered, zoom) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Target selection crosshairs / reticle
+      if (isSelected || isHovered) {
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.strokeStyle = isSelected ? '#38bdf8' : '#facc15';
+        ctx.lineWidth = isSelected ? 2.5 : 1.5;
+        ctx.stroke();
+
+        if (isSelected) {
+          ctx.beginPath();
+          ctx.arc(0, 0, 22, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
         }
       }
 
-      vehicles.forEach(v => {
-        if (!isVehicleVisible(v)) return;
-        const isSelected = selectedVehicle && selectedVehicle.id === v.id;
+      ctx.rotate(heading * Math.PI / 180);
 
-        if (markers.has(v.id)) {
-          const marker = markers.get(v.id);
-          marker.setLatLng([v.lat, v.lon]);
-          marker.setIcon(createVehicleIcon(v, isSelected));
-          marker.setTooltipContent(createTooltipContent(v));
-        } else {
-          const marker = L.marker([v.lat, v.lon], { icon: createVehicleIcon(v, isSelected) });
-          marker.bindTooltip(createTooltipContent(v), {
-            className: 'tactical-tooltip',
-            direction: 'top',
-            offset: [0, -12],
-            opacity: 0.98
-          });
-          marker.on('click', () => {
-            selectVehicle(v);
-            sound.beep(750, 0.08);
-          });
-          marker.addTo(map);
-          markers.set(v.id, marker);
-        }
-      });
+      const color = getAircraftColor(alt || 30000);
+      ctx.fillStyle = color;
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 1.2;
 
-      updateCounts();
-      renderFleetSidebar();
+      // Modern airliner silhouette
+      ctx.beginPath();
+      ctx.moveTo(0, -11);
+      ctx.lineTo(2, -7);
+      ctx.lineTo(2, -2);
+      ctx.lineTo(10, 3.5);
+      ctx.lineTo(10, 5);
+      ctx.lineTo(2, 2.5);
+      ctx.lineTo(2, 8);
+      ctx.lineTo(5.5, 11);
+      ctx.lineTo(5.5, 12);
+      ctx.lineTo(0, 10.5);
+      ctx.lineTo(-5.5, 12);
+      ctx.lineTo(-5.5, 11);
+      ctx.lineTo(-2, 8);
+      ctx.lineTo(-2, 2.5);
+      ctx.lineTo(-10, 5);
+      ctx.lineTo(-10, 3.5);
+      ctx.lineTo(-2, -2);
+      ctx.lineTo(-2, -7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
     }
 
+    function drawTrain(ctx, x, y, heading, isSelected, isHovered, zoom) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (isSelected || isHovered) {
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.rotate(heading * Math.PI / 180);
+
+      // Bullet train nose
+      ctx.fillStyle = '#10b981';
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, -10);
+      ctx.quadraticCurveTo(3.5, -8, 4, -3);
+      ctx.lineTo(4, 9);
+      ctx.lineTo(-4, 9);
+      ctx.lineTo(-4, -3);
+      ctx.quadraticCurveTo(-3.5, -8, 0, -10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(-2, -4, 4, 8);
+
+      ctx.restore();
+    }
+
+    function drawShip(ctx, x, y, heading, isSelected, isHovered, zoom) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (isSelected || isHovered) {
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.rotate(heading * Math.PI / 180);
+
+      // Maritime cargo ship hull
+      ctx.fillStyle = '#f97316';
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, -11);
+      ctx.lineTo(4.5, -4);
+      ctx.lineTo(4.5, 9);
+      ctx.lineTo(-4.5, 9);
+      ctx.lineTo(-4.5, -4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2, 3, 4, 3.5);
+
+      ctx.restore();
+    }
+
+    function drawBus(ctx, x, y, heading, isSelected, isHovered, zoom) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (isSelected || isHovered) {
+        ctx.beginPath();
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.rotate(heading * Math.PI / 180);
+
+      // Intercity coach
+      ctx.fillStyle = '#a855f7';
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-3.5, -9, 7, 18, 2);
+      else ctx.rect(-3.5, -9, 7, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2.5, -8, 5, 2);
+
+      ctx.restore();
+    }
+
+    // Master render loop
+    function renderCanvas() {
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(dpr, dpr);
+
+      const zoom = map.getZoom();
+      const bounds = map.getBounds();
+      const pad = 1.5;
+      const south = bounds.getSouth() - pad;
+      const north = bounds.getNorth() + pad;
+      const west = bounds.getWest() - pad;
+      const east = bounds.getEast() + pad;
+
+      const screenW = canvas.width / dpr;
+      const screenH = canvas.height / dpr;
+
+      // 1. Draw unselected vehicles
+      for (let i = 0; i < vehicles.length; i++) {
+        const v = vehicles[i];
+        if (!isVehicleVisible(v)) continue;
+        if (selectedVehicle && selectedVehicle.id === v.id) continue;
+
+        // Viewport bounding cull
+        if (v.lat < south || v.lat > north) continue;
+
+        const pt = map.latLngToContainerPoint([v.lat, v.lon]);
+        if (pt.x < -30 || pt.x > screenW + 30 || pt.y < -30 || pt.y > screenH + 30) continue;
+
+        const isHovered = hoveredVehicle && hoveredVehicle.id === v.id;
+
+        if (v.category === 'flight') drawAircraft(ctx, pt.x, pt.y, v.heading, v.altitude, false, isHovered, zoom);
+        else if (v.category === 'train') drawTrain(ctx, pt.x, pt.y, v.heading, false, isHovered, zoom);
+        else if (v.category === 'ship') drawShip(ctx, pt.x, pt.y, v.heading, false, isHovered, zoom);
+        else drawBus(ctx, pt.x, pt.y, v.heading, false, isHovered, zoom);
+
+        // Zoomed in callsign label
+        if (zoom >= 7 || isHovered) {
+          ctx.font = '600 9px monospace';
+          ctx.fillStyle = '#f8fafc';
+          ctx.strokeStyle = '#020617';
+          ctx.lineWidth = 2.5;
+          ctx.strokeText(v.id, pt.x + 12, pt.y + 3);
+          ctx.fillText(v.id, pt.x + 12, pt.y + 3);
+        }
+      }
+
+      // 2. Draw selected vehicle on top with priority
+      if (selectedVehicle && isVehicleVisible(selectedVehicle)) {
+        const pt = map.latLngToContainerPoint([selectedVehicle.lat, selectedVehicle.lon]);
+        if (pt.x >= -40 && pt.x <= screenW + 40 && pt.y >= -40 && pt.y <= screenH + 40) {
+          if (selectedVehicle.category === 'flight') drawAircraft(ctx, pt.x, pt.y, selectedVehicle.heading, selectedVehicle.altitude, true, false, zoom);
+          else if (selectedVehicle.category === 'train') drawTrain(ctx, pt.x, pt.y, selectedVehicle.heading, true, false, zoom);
+          else if (selectedVehicle.category === 'ship') drawShip(ctx, pt.x, pt.y, selectedVehicle.heading, true, false, zoom);
+          else drawBus(ctx, pt.x, pt.y, selectedVehicle.heading, true, false, zoom);
+
+          ctx.font = 'bold 11px monospace';
+          ctx.fillStyle = '#38bdf8';
+          ctx.strokeStyle = '#020617';
+          ctx.lineWidth = 3;
+          ctx.strokeText(selectedVehicle.id, pt.x + 15, pt.y + 4);
+          ctx.fillText(selectedVehicle.id, pt.x + 15, pt.y + 4);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // ⚡ 60 FPS GLIDING DEAD-RECKONING ANIMATION ENGINE
+    // =========================================================================
+    let lastFrameTime = performance.now();
+    function animationLoop(now) {
+      const dt = Math.min((now - lastFrameTime) / 1000.0, 0.1);
+      lastFrameTime = now;
+
+      // Smooth dead-reckoning movement
+      for (let i = 0; i < vehicles.length; i++) {
+        const v = vehicles[i];
+        const speedKmh = v.speed || 250;
+        const distKm = (speedKmh / 3600.0) * dt;
+        const rad = (v.heading || 0) * Math.PI / 180.0;
+        v.lat += (Math.cos(rad) * distKm) / 111.0;
+        const cosLat = Math.cos(v.lat * Math.PI / 180.0);
+        v.lon += (Math.sin(rad) * distKm) / (111.0 * (cosLat === 0 ? 0.0001 : cosLat));
+      }
+
+      renderCanvas();
+      requestAnimationFrame(animationLoop);
+    }
+    requestAnimationFrame(animationLoop);
+
+    map.on('move', renderCanvas);
+    map.on('zoom', renderCanvas);
+    map.on('viewreset', renderCanvas);
+
+    // =========================================================================
+    // 🎯 FAST SPATIAL HIT-TESTING & TACTICAL TOOLTIP
+    // =========================================================================
+    const hudTooltip = document.getElementById('tacticalHUDTooltip');
+
+    function findVehicleAtPoint(mx, my) {
+      const radiusSq = 256; // 16px radius
+      for (let i = 0; i < vehicles.length; i++) {
+        const v = vehicles[i];
+        if (!isVehicleVisible(v)) continue;
+        const pt = map.latLngToContainerPoint([v.lat, v.lon]);
+        const dx = pt.x - mx;
+        const dy = pt.y - my;
+        if (dx * dx + dy * dy <= radiusSq) {
+          return v;
+        }
+      }
+      return null;
+    }
+
+    map.on('mousemove', (e) => {
+      const mx = e.containerPoint.x;
+      const my = e.containerPoint.y;
+      const found = findVehicleAtPoint(mx, my);
+
+      if (found) {
+        hoveredVehicle = found;
+        map.getContainer().style.cursor = 'pointer';
+
+        const catIcon = found.category === 'flight' ? '✈️' : found.category === 'train' ? '🚄' : found.category === 'ship' ? '🚢' : '🚌';
+        const altStr = found.category === 'flight' ? `${found.altitude.toLocaleString()} ft` : `${found.altitude} m`;
+
+        hudTooltip.innerHTML = `
+          <div class="space-y-1 text-left">
+            <div class="flex items-center gap-2 border-b border-slate-700/60 pb-1">
+              <span class="font-black text-sky-400 text-xs">${catIcon} ${found.id}</span>
+              <span class="text-[10px] text-slate-300 font-sans truncate max-w-[130px]">${found.operator}</span>
+            </div>
+            <div class="flex items-center gap-3 text-[10px] text-slate-300 pt-0.5">
+              <span>Alt: <strong class="text-emerald-400">${altStr}</strong></span>
+              <span>Spd: <strong class="text-amber-400">${found.speed} km/h</strong></span>
+              <span>Hdg: <strong>${found.heading}°</strong></span>
+            </div>
+            <div class="text-[9px] text-slate-400 font-sans">
+              <strong>${found.origin.city}</strong> ➔ <strong>${found.dest.city}</strong>
+            </div>
+          </div>
+        `;
+        hudTooltip.style.left = (e.originalEvent.clientX + 14) + 'px';
+        hudTooltip.style.top = (e.originalEvent.clientY + 14) + 'px';
+        hudTooltip.classList.remove('hidden');
+      } else {
+        hoveredVehicle = null;
+        map.getContainer().style.cursor = '';
+        hudTooltip.classList.add('hidden');
+      }
+    });
+
+    map.on('click', (e) => {
+      const mx = e.containerPoint.x;
+      const my = e.containerPoint.y;
+      const clicked = findVehicleAtPoint(mx, my);
+
+      if (clicked) {
+        selectVehicle(clicked);
+        sound.beep(750, 0.08);
+      } else if (!e.originalEvent.target.closest('#inspectorDrawer') && !e.originalEvent.target.closest('#fleetSidebar')) {
+        // Clicked open ocean/land
+        // selectedVehicle = null;
+      }
+    });
+
+    // =========================================================================
+    // 📊 COUNTS & FLEET SIDEBAR
+    // =========================================================================
     function updateCounts() {
       const counts = { flight: 0, train: 0, ship: 0, bus: 0, car: 0 };
       vehicles.forEach(v => { if (counts[v.category] !== undefined) counts[v.category]++; });
 
-      document.getElementById('countAll').textContent = vehicles.length;
-      document.getElementById('countFlight').textContent = counts.flight;
-      document.getElementById('countShip').textContent = counts.ship;
-      document.getElementById('countTrain').textContent = counts.train;
-      document.getElementById('countTransit').textContent = counts.bus + counts.car;
-      document.getElementById('fleetSidebarCount').textContent = vehicles.filter(v => isVehicleVisible(v)).length;
+      document.getElementById('countAll').textContent = vehicles.length.toLocaleString();
+      document.getElementById('countFlight').textContent = counts.flight.toLocaleString();
+      document.getElementById('countShip').textContent = counts.ship.toLocaleString();
+      document.getElementById('countTrain').textContent = counts.train.toLocaleString();
+      document.getElementById('countTransit').textContent = (counts.bus + counts.car).toLocaleString();
+      document.getElementById('fleetSidebarCount').textContent = vehicles.filter(v => isVehicleVisible(v)).length.toLocaleString();
     }
 
-    // Render Left Fleet Explorer Sidebar
     function renderFleetSidebar() {
       const container = document.getElementById('fleetCardsContainer');
       const visible = vehicles.filter(v => isVehicleVisible(v));
@@ -681,7 +881,7 @@
         return;
       }
 
-      container.innerHTML = visible.slice(0, 80).map(v => {
+      container.innerHTML = visible.slice(0, 100).map(v => {
         const icon = v.category === 'flight' ? '✈️' : v.category === 'train' ? '🚄' : v.category === 'ship' ? '🚢' : '🚌';
         const color = v.category === 'flight' ? 'text-amber-400' : v.category === 'train' ? 'text-emerald-400' : v.category === 'ship' ? 'text-orange-400' : 'text-purple-400';
         return `
@@ -716,8 +916,7 @@
 
     // Toggle Left Sidebar
     document.getElementById('btnToggleFleetSidebar').addEventListener('click', () => {
-      const sidebar = document.getElementById('fleetSidebar');
-      sidebar.classList.toggle('hidden');
+      document.getElementById('fleetSidebar').classList.toggle('hidden');
     });
 
     // Switch Dedicated Modes
@@ -732,7 +931,8 @@
 
         currentMode = btn.getAttribute('data-mode');
         sound.beep(650, 0.05);
-        renderMarkers();
+        renderCanvas();
+        renderFleetSidebar();
       });
     });
 
@@ -746,70 +946,7 @@
     });
 
     // =========================================================================
-    // 📡 WEBSOCKET STREAM CONNECTOR (HEROKU LIVE)
-    // =========================================================================
-    function connectBackendWebSocket(url) {
-      if (ws) { ws.close(); ws = null; }
-      try {
-        ws = new WebSocket(url);
-        document.getElementById('backendStatusText').textContent = "Connecting Heroku...";
-        document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
-
-        ws.onopen = () => {
-          document.getElementById('backendStatusText').textContent = "Heroku Live Connected";
-          document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-emerald-400";
-          sound.beep(960, 0.1);
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.vehicles && data.vehicles.length > 0) {
-              vehicles = data.vehicles;
-              renderMarkers();
-              if (selectedVehicle) {
-                const current = vehicles.find(v => v.id === selectedVehicle.id);
-                if (current) updateInspectorDetails(current);
-              }
-            }
-          } catch (e) {}
-        };
-
-        ws.onerror = () => fallbackState();
-        ws.onclose = () => {
-          fallbackState();
-          setTimeout(() => connectBackendWebSocket(url), 5000);
-        };
-      } catch (err) {
-        fallbackState();
-      }
-    }
-
-    function fallbackState() {
-      document.getElementById('backendStatusText').textContent = "Reconnecting Heroku...";
-      document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse";
-    }
-
-    const backendModal = document.getElementById('backendModal');
-    document.getElementById('btnConfigBackend').addEventListener('click', () => backendModal.classList.remove('hidden'));
-    document.getElementById('btnCloseModal').addEventListener('click', () => backendModal.classList.add('hidden'));
-    document.getElementById('btnSaveWS').addEventListener('click', () => {
-      const url = document.getElementById('wsUrlInput').value.trim();
-      if (url) {
-        localStorage.setItem('std_track_ws_url', url);
-        connectBackendWebSocket(url);
-      }
-      backendModal.classList.add('hidden');
-    });
-
-    const activeWs = localStorage.getItem('std_track_ws_url') || HEROKU_BACKEND_WS_URL;
-    if (activeWs) {
-      document.getElementById('wsUrlInput').value = activeWs;
-      connectBackendWebSocket(activeWs);
-    }
-
-    // =========================================================================
-    // 🎯 INSPECTOR DRAWER
+    // 🎯 INSPECTOR DRAWER & TRAJECTORY ARCS
     // =========================================================================
     function selectVehicle(v) {
       selectedVehicle = v;
@@ -824,7 +961,6 @@
       document.getElementById('drawerDestCode').textContent = v.dest.code;
       document.getElementById('drawerDestCity').textContent = v.dest.city;
       document.getElementById('drawerStatusText').textContent = v.status;
-      document.getElementById('drawerETA').textContent = v.eta || "En Route";
       document.getElementById('drawerSpeed').textContent = v.speed;
       document.getElementById('drawerSpeedUnit').textContent = v.category === 'ship' ? 'knots' : 'km/h';
       document.getElementById('drawerAltitude').textContent = v.category === 'flight' ? v.altitude.toLocaleString() : (v.altitude + ' m');
@@ -834,7 +970,7 @@
       document.getElementById('drawerCoords').textContent = `${v.lat.toFixed(4)}°, ${v.lon.toFixed(4)}°`;
       document.getElementById('drawerSquawk').textContent = v.squawk || "4701";
       document.getElementById('drawerTransponder').textContent = v.transponder || "Mode-S ADS-B";
-      document.getElementById('drawerSource').textContent = v.source || "Live Scraper";
+      document.getElementById('drawerSource').textContent = v.source || "Live Telemetry";
 
       const catIcon = document.getElementById('drawerCategoryIcon');
       if (v.category === 'flight') catIcon.setAttribute('data-lucide', 'plane');
@@ -845,7 +981,6 @@
 
       map.panTo([v.lat, v.lon], { animate: true, duration: 0.8 });
       drawVehicleTrail(v);
-      renderMarkers();
     }
 
     function updateInspectorDetails(v) {
@@ -877,7 +1012,7 @@
       selectedVehicle = null;
       if (vehicleTrailLayer) { map.removeLayer(vehicleTrailLayer); vehicleTrailLayer = null; }
       if (cameraFollowInterval) { clearInterval(cameraFollowInterval); cameraFollowInterval = null; document.getElementById('followBtnText').textContent = "Lock Camera"; }
-      renderMarkers();
+      renderCanvas();
     });
 
     const btnFollow = document.getElementById('btnFollowVehicle');
@@ -939,8 +1074,85 @@
       });
     });
 
-    // Initial render
-    renderMarkers();
+    // =========================================================================
+    // 📡 WEBSOCKET & REST LIVE TELEMETRY INGESTION (HEROKU)
+    // =========================================================================
+    // Immediate REST snapshot on page load (0ms waiting)
+    fetch(HEROKU_BACKEND_HTTP_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (data.vehicles && data.vehicles.length > 0) {
+          vehicles = data.vehicles;
+          updateCounts();
+          renderFleetSidebar();
+          renderCanvas();
+        }
+      })
+      .catch(err => console.log('REST bootstrap:', err));
+
+    function connectBackendWebSocket(url) {
+      if (ws) { ws.close(); ws = null; }
+      try {
+        ws = new WebSocket(url);
+        document.getElementById('backendStatusText').textContent = "Connecting Live...";
+        document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
+
+        ws.onopen = () => {
+          document.getElementById('backendStatusText').textContent = "Heroku Live Connected";
+          document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-emerald-400";
+          sound.beep(960, 0.1);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.vehicles && data.vehicles.length > 0) {
+              vehicles = data.vehicles;
+              updateCounts();
+              renderFleetSidebar();
+              if (selectedVehicle) {
+                const current = vehicles.find(v => v.id === selectedVehicle.id);
+                if (current) {
+                  selectedVehicle = current;
+                  updateInspectorDetails(current);
+                }
+              }
+            }
+          } catch (e) {}
+        };
+
+        ws.onerror = () => fallbackState();
+        ws.onclose = () => {
+          fallbackState();
+          setTimeout(() => connectBackendWebSocket(url), 4000);
+        };
+      } catch (err) {
+        fallbackState();
+      }
+    }
+
+    function fallbackState() {
+      document.getElementById('backendStatusText').textContent = "Reconnecting Heroku...";
+      document.getElementById('backendStatusDot').className = "inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse";
+    }
+
+    const backendModal = document.getElementById('backendModal');
+    document.getElementById('btnConfigBackend').addEventListener('click', () => backendModal.classList.remove('hidden'));
+    document.getElementById('btnCloseModal').addEventListener('click', () => backendModal.classList.add('hidden'));
+    document.getElementById('btnSaveWS').addEventListener('click', () => {
+      const url = document.getElementById('wsUrlInput').value.trim();
+      if (url) {
+        localStorage.setItem('std_track_ws_url', url);
+        connectBackendWebSocket(url);
+      }
+      backendModal.classList.add('hidden');
+    });
+
+    const activeWs = localStorage.getItem('std_track_ws_url') || HEROKU_BACKEND_WS_URL;
+    if (activeWs) {
+      document.getElementById('wsUrlInput').value = activeWs;
+      connectBackendWebSocket(activeWs);
+    }
   </script>
 </body>
 </html>
