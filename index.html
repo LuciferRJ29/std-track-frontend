@@ -33,7 +33,7 @@
 
   <style>
     .leaflet-container {
-      background-color: #040711 !important;
+      background-color: #060b18 !important;
       font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
     .leaflet-bar a {
@@ -113,7 +113,7 @@
     <div class="flex items-center gap-2">
       <!-- Zero-Watermark Map Style Switcher -->
       <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-700/80 text-xs">
-        <button id="btnThemeDark" class="theme-btn active px-2.5 py-1 rounded-lg text-sky-400 bg-slate-800 font-medium" title="Tactical Dark Radar (Zero Watermark)">
+        <button id="btnThemeDark" class="theme-btn active px-2.5 py-1 rounded-lg text-sky-400 bg-slate-800 font-medium" title="CartoDB Midnight Radar (Zero Watermark)">
           <i data-lucide="moon" class="w-3.5 h-3.5"></i>
         </button>
         <button id="btnThemeSat" class="theme-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 font-medium" title="4K Photorealistic Satellite">
@@ -413,23 +413,33 @@
     }, 1000);
 
     // =========================================================================
-    // 🗺️ ZERO-WATERMARK MAP TILES
+    // 🗺️ ZERO-WATERMARK MAP TILES (NO TOP/BOTTOM BLACK BARS)
     // =========================================================================
     const map = L.map('map', { 
       zoomControl: false, 
-      attributionControl: false 
-    }).setView([22.5, 79.0], 5); // Centered over India subcontinent
+      attributionControl: false,
+      minZoom: 2.2,
+      maxZoom: 18,
+      worldCopyJump: true,
+      maxBounds: [[-82, -220], [82, 220]],
+      maxBoundsViscosity: 0.92
+    }).setView([20.0, 10.0], 3); // Centered over world view filling full screen!
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    const layerDarkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 });
-    const layerDarkLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, pane: 'overlayPane' });
-    const layerDarkGroup = L.layerGroup([layerDarkBase, layerDarkLabels]).addTo(map);
+    // CartoDB Dark Matter (High-precision midnight aviation radar)
+    const layerDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
+      maxZoom: 19,
+      subdomains: 'abcd' 
+    }).addTo(map);
 
+    // 4K Photorealistic Satellite
     const layerSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 });
+    
+    // Clean Vector Map
     const layerOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
 
     function setMapTheme(theme) {
-      map.removeLayer(layerDarkGroup);
+      map.removeLayer(layerDark);
       map.removeLayer(layerSatellite);
       map.removeLayer(layerOSM);
 
@@ -439,7 +449,7 @@
       });
 
       if (theme === 'dark') {
-        layerDarkGroup.addTo(map);
+        layerDark.addTo(map);
         document.getElementById('btnThemeDark').classList.add('active', 'bg-slate-800', 'text-sky-400');
       } else if (theme === 'sat') {
         layerSatellite.addTo(map);
@@ -525,6 +535,15 @@
       return true; // 'all' mode shows entire worldwide transport network
     }
 
+    // Dynamic scale factor by zoom level: micro-vectors at world zoom, full detailed vectors when zoomed in
+    function getScale(zoom) {
+      if (zoom <= 2) return 0.35;
+      if (zoom === 3) return 0.45;
+      if (zoom === 4) return 0.62;
+      if (zoom === 5) return 0.8;
+      return 1.0;
+    }
+
     // =========================================================================
     // 🎨 VECTOR DRAWING FUNCTIONS (HARDWARE-ACCELERATED 2D CANVAS)
     // =========================================================================
@@ -539,17 +558,21 @@
       ctx.save();
       ctx.translate(x, y);
 
+      const baseScale = getScale(zoom);
+      const s = (isSelected || isHovered) ? baseScale * 1.35 : baseScale;
+      ctx.scale(s, s);
+
       // Target selection crosshairs / reticle
       if (isSelected || isHovered) {
         ctx.beginPath();
-        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
         ctx.strokeStyle = isSelected ? '#38bdf8' : '#facc15';
         ctx.lineWidth = isSelected ? 2.5 : 1.5;
         ctx.stroke();
 
         if (isSelected) {
           ctx.beginPath();
-          ctx.arc(0, 0, 22, 0, Math.PI * 2);
+          ctx.arc(0, 0, 24, 0, Math.PI * 2);
           ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
           ctx.lineWidth = 1;
           ctx.stroke();
@@ -594,6 +617,10 @@
       ctx.save();
       ctx.translate(x, y);
 
+      const baseScale = getScale(zoom);
+      const s = (isSelected || isHovered) ? baseScale * 1.35 : baseScale;
+      ctx.scale(s, s);
+
       if (isSelected || isHovered) {
         ctx.beginPath();
         ctx.arc(0, 0, 16, 0, Math.PI * 2);
@@ -629,6 +656,10 @@
       ctx.save();
       ctx.translate(x, y);
 
+      const baseScale = getScale(zoom);
+      const s = (isSelected || isHovered) ? baseScale * 1.35 : baseScale;
+      ctx.scale(s, s);
+
       if (isSelected || isHovered) {
         ctx.beginPath();
         ctx.arc(0, 0, 16, 0, Math.PI * 2);
@@ -662,6 +693,10 @@
     function drawBus(ctx, x, y, heading, isSelected, isHovered, zoom) {
       ctx.save();
       ctx.translate(x, y);
+
+      const baseScale = getScale(zoom);
+      const s = (isSelected || isHovered) ? baseScale * 1.35 : baseScale;
+      ctx.scale(s, s);
 
       if (isSelected || isHovered) {
         ctx.beginPath();
@@ -700,8 +735,6 @@
       const pad = 1.5;
       const south = bounds.getSouth() - pad;
       const north = bounds.getNorth() + pad;
-      const west = bounds.getWest() - pad;
-      const east = bounds.getEast() + pad;
 
       const screenW = canvas.width / dpr;
       const screenH = canvas.height / dpr;
@@ -726,13 +759,13 @@
         else drawBus(ctx, pt.x, pt.y, v.heading, false, isHovered, zoom);
 
         // Zoomed in callsign label
-        if (zoom >= 7 || isHovered) {
+        if (zoom >= 6 || isHovered) {
           ctx.font = '600 9px monospace';
           ctx.fillStyle = '#f8fafc';
           ctx.strokeStyle = '#020617';
           ctx.lineWidth = 2.5;
-          ctx.strokeText(v.id, pt.x + 12, pt.y + 3);
-          ctx.fillText(v.id, pt.x + 12, pt.y + 3);
+          ctx.strokeText(v.id, pt.x + 10, pt.y + 3);
+          ctx.fillText(v.id, pt.x + 10, pt.y + 3);
         }
       }
 
@@ -749,8 +782,8 @@
           ctx.fillStyle = '#38bdf8';
           ctx.strokeStyle = '#020617';
           ctx.lineWidth = 3;
-          ctx.strokeText(selectedVehicle.id, pt.x + 15, pt.y + 4);
-          ctx.fillText(selectedVehicle.id, pt.x + 15, pt.y + 4);
+          ctx.strokeText(selectedVehicle.id, pt.x + 14, pt.y + 4);
+          ctx.fillText(selectedVehicle.id, pt.x + 14, pt.y + 4);
         }
       }
 
@@ -791,7 +824,9 @@
     const hudTooltip = document.getElementById('tacticalHUDTooltip');
 
     function findVehicleAtPoint(mx, my) {
-      const radiusSq = 256; // 16px radius
+      const zoom = map.getZoom();
+      const radius = zoom <= 3 ? 10 : zoom <= 5 ? 14 : 18;
+      const radiusSq = radius * radius;
       for (let i = 0; i < vehicles.length; i++) {
         const v = vehicles[i];
         if (!isVehicleVisible(v)) continue;
@@ -851,9 +886,6 @@
       if (clicked) {
         selectVehicle(clicked);
         sound.beep(750, 0.08);
-      } else if (!e.originalEvent.target.closest('#inspectorDrawer') && !e.originalEvent.target.closest('#fleetSidebar')) {
-        // Clicked open ocean/land
-        // selectedVehicle = null;
       }
     });
 
