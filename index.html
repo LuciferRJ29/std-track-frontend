@@ -181,13 +181,34 @@
       </button>
     </div>
 
-    <!-- Altitude Legend -->
-    <div class="hidden xl:flex items-center gap-2 text-[11px] font-mono text-slate-400 shrink-0">
-      <span class="text-slate-500 font-bold">ALTITUDE:</span>
-      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>&lt;10k ft</span>
-      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>10-25k ft</span>
-      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-400"></span>25-38k ft</span>
-      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-400"></span>&gt;38k ft</span>
+    <!-- Right Actions: Corridors Toggle, 24H Volume Badge, Altitude Legend -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <!-- Global Transport Corridors & Sea Lanes Toggle -->
+      <button id="btnToggleCorridors" class="px-2.5 py-1 rounded-lg border border-teal-500/40 bg-teal-950/60 text-teal-300 hover:bg-teal-900/60 font-semibold transition-all flex items-center gap-1.5 shadow-sm shadow-teal-500/20" title="Toggle Global Sea Lanes, Jet Airways & Rail Trunk Networks">
+        <i data-lucide="network" class="w-3.5 h-3.5 text-teal-400"></i>
+        <span>Global Corridors</span>
+      </button>
+
+      <!-- 24H Worldwide Daily Volume Metric -->
+      <div class="hidden 2xl:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-[11px] font-mono text-slate-300" title="Daily Worldwide Commercial Transports Monitored">
+        <span class="text-amber-400 font-bold">24H VOLUME:</span>
+        <span class="text-sky-300">✈️ 120k+</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-emerald-300">🚄 100k+</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-purple-300">🚌 10M+</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-orange-300">🚢 100k+</span>
+      </div>
+
+      <!-- Altitude Legend -->
+      <div class="hidden xl:flex items-center gap-2 text-[11px] font-mono text-slate-400">
+        <span class="text-slate-500 font-bold">ALTITUDE:</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>&lt;10k ft</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>10-25k ft</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-400"></span>25-38k ft</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-400"></span>&gt;38k ft</span>
+      </div>
     </div>
   </div>
 
@@ -426,14 +447,21 @@
     }).setView([20.0, 10.0], 3); // Centered over world view filling full screen!
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // CartoDB Dark Matter (High-precision midnight aviation radar)
-    const layerDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
-      maxZoom: 19,
-      subdomains: 'abcd' 
-    }).addTo(map);
+    // 🌐 Esri World Dark Gray Canvas (Zero Watermark, 100% Free Public GIS Tiles)
+    const esriDarkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { 
+      maxZoom: 16,
+      attribution: 'Esri, HERE, Garmin, OpenStreetMap'
+    });
+    const esriDarkLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { 
+      maxZoom: 16,
+      pane: 'overlayPane'
+    });
+    const layerDark = L.layerGroup([esriDarkBase, esriDarkLabels]).addTo(map);
 
-    // 4K Photorealistic Satellite
-    const layerSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 });
+    // 4K Photorealistic Satellite + Global Boundaries & Places
+    const esriSatBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 });
+    const esriSatLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, pane: 'overlayPane' });
+    const layerSatellite = L.layerGroup([esriSatBase, esriSatLabels]);
     
     // Clean Vector Map
     const layerOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
@@ -499,6 +527,95 @@
     let vehicleTrailLayer = null;
     let cameraFollowInterval = null;
     let ws = null;
+    let showCorridors = true;
+    let corridorsLayer = null;
+
+    // =========================================================================
+    // 🌐 GLOBAL TRANSPORT CORRIDORS & SEA LANES OVERLAY
+    // =========================================================================
+    const WORLD_CORRIDORS = [
+      // 🚢 Maritime Shipping Lanes
+      { name: "Persian Gulf - India Crude Lane", cat: "ship", coords: [[29.68, 48.80], [26.56, 56.25], [24.20, 58.50], [22.80, 69.10], [18.95, 72.85]] },
+      { name: "Bay of Bengal & Malacca Route", cat: "ship", coords: [[22.54, 88.31], [20.26, 86.67], [17.68, 83.28], [13.08, 80.30], [11.67, 92.74], [5.90, 95.20], [1.25, 103.80]] },
+      { name: "Strait of Malacca & Singapore Chokepoint", cat: "ship", coords: [[6.80, 93.90], [5.41, 100.35], [2.99, 101.38], [1.95, 102.30], [1.25, 103.80], [1.50, 104.50]] },
+      { name: "Suez Canal & Red Sea Corridor", cat: "ship", coords: [[9.97, 76.24], [12.80, 48.50], [12.60, 43.35], [20.50, 38.20], [29.93, 32.56], [31.26, 32.31], [33.50, 29.00]] },
+      { name: "Mediterranean Sea Arterial Lane", cat: "ship", coords: [[31.26, 32.31], [34.80, 24.50], [37.94, 23.63], [35.82, 14.54], [44.42, 8.78], [39.45, -0.32], [35.98, -5.60]] },
+      { name: "North Atlantic Container Highway", cat: "ship", coords: [[40.66, -74.12], [41.00, -69.50], [44.50, -48.00], [48.00, -25.00], [49.50, -4.50], [51.98, 4.02], [53.53, 9.97]] },
+      { name: "Transpacific Central Highway", cat: "ship", coords: [[30.62, 122.06], [22.35, 114.12], [28.50, -170.00], [26.00, -155.00], [33.74, -118.26]] },
+      { name: "Transpacific Northern Highway", cat: "ship", coords: [[35.61, 139.78], [42.50, 155.00], [48.20, 175.00], [49.50, -170.00], [48.00, -140.00], [47.58, -122.36]] },
+      { name: "Panama Canal Transit", cat: "ship", coords: [[10.50, -79.20], [9.36, -79.90], [9.25, -79.91], [9.03, -79.65], [8.95, -79.56], [7.80, -79.30]] },
+      { name: "Cape of Good Hope Route", cat: "ship", coords: [[6.94, 79.84], [-20.15, 57.50], [-26.50, 48.00], [-29.87, 31.02], [-34.60, 18.20], [-22.90, 14.40], [28.10, -15.40]] },
+
+      // 🚄 Rail Networks
+      { name: "Delhi - Mumbai Western Trunk", cat: "train", coords: [[28.64, 77.22], [27.49, 77.67], [25.21, 75.86], [23.33, 75.04], [22.31, 73.18], [21.20, 72.84], [18.97, 72.82]] },
+      { name: "Delhi - Howrah Eastern Trunk", cat: "train", coords: [[28.64, 77.22], [27.90, 78.09], [26.45, 80.35], [25.45, 81.83], [25.28, 83.11], [24.80, 85.00], [23.79, 86.43], [22.58, 88.34]] },
+      { name: "Delhi - Chennai Grand Trunk", cat: "train", coords: [[28.64, 77.22], [27.16, 77.99], [26.22, 78.18], [25.45, 78.57], [23.26, 77.41], [21.15, 79.09], [17.97, 79.59], [16.51, 80.65], [13.08, 80.27]] },
+      { name: "Howrah - Chennai Coromandel Coast", cat: "train", coords: [[22.58, 88.34], [22.33, 87.32], [20.46, 85.88], [20.27, 85.84], [17.72, 83.29], [16.51, 80.65], [13.08, 80.27]] },
+      { name: "Mumbai - Howrah Central Trunk", cat: "train", coords: [[18.94, 72.84], [19.24, 73.14], [19.96, 73.83], [21.05, 75.79], [21.15, 79.09], [21.25, 81.63], [22.77, 86.20], [22.58, 88.34]] },
+      { name: "Delhi - Bengaluru Southern Spine", cat: "train", coords: [[28.64, 77.22], [25.45, 78.57], [23.26, 77.41], [21.15, 79.09], [17.43, 78.50], [15.82, 78.03], [12.98, 77.57]] },
+      { name: "Japan Tokaido & Sanyo Shinkansen", cat: "train", coords: [[35.68, 139.77], [35.46, 139.62], [35.17, 136.88], [34.98, 135.76], [34.73, 135.50], [34.28, 132.22], [33.88, 130.88]] },
+      { name: "France TGV & Eurostar High Speed", cat: "train", coords: [[51.53, -0.12], [50.64, 3.07], [48.88, 2.36], [45.76, 4.83], [43.30, 5.37]] },
+      { name: "Germany ICE High Speed Network", cat: "train", coords: [[52.52, 13.37], [52.38, 9.74], [50.11, 8.66], [48.78, 9.18], [48.14, 11.56]] },
+      { name: "USA Amtrak Northeast Corridor", cat: "train", coords: [[42.35, -71.06], [40.75, -73.99], [39.96, -75.18], [39.31, -76.62], [38.90, -77.01]] },
+      { name: "China Beijing - Shanghai High-Speed", cat: "train", coords: [[39.87, 116.38], [39.15, 117.16], [36.67, 116.89], [31.97, 118.80], [31.19, 121.32]] },
+
+      // 🚌 National Expressways & Highways
+      { name: "Delhi - Chandigarh - Shimla Highway (NH-44/5)", cat: "transit", coords: [[28.67, 77.23], [29.39, 76.96], [30.36, 76.85], [30.73, 76.78], [31.10, 77.16]] },
+      { name: "Delhi - Jaipur Highway (NH-48)", cat: "transit", coords: [[28.61, 77.24], [28.47, 77.07], [27.89, 76.28], [26.92, 75.80]] },
+      { name: "Yamuna & Agra-Lucknow Super Expressway", cat: "transit", coords: [[28.65, 77.32], [28.47, 77.50], [27.18, 78.07], [26.78, 79.03], [26.83, 80.92]] },
+      { name: "Mumbai - Pune Access-Controlled Expressway", cat: "transit", coords: [[19.02, 72.85], [19.07, 73.00], [18.76, 73.41], [18.53, 73.87]] },
+      { name: "Bengaluru - Mysuru 10-Lane Expressway", cat: "transit", coords: [[12.98, 77.57], [12.80, 77.38], [12.65, 77.20], [12.52, 76.90], [12.31, 76.66]] },
+      { name: "US I-95 Northeast Megalopolis (NYC - DC)", cat: "transit", coords: [[40.76, -73.99], [40.73, -74.16], [39.96, -75.18], [39.28, -76.62], [38.90, -77.01]] },
+      { name: "Trans-European Motorway (Paris - Amsterdam)", cat: "transit", coords: [[48.84, 2.38], [50.64, 3.08], [50.86, 4.36], [51.92, 4.47], [52.39, 4.84]] },
+
+      // ✈️ International Jet Airways
+      { name: "North Atlantic Track NAT-A (London - NYC)", cat: "flight", coords: [[51.47, -0.45], [55.00, -15.00], [56.00, -30.00], [54.00, -45.00], [45.00, -60.00], [40.64, -73.78]] },
+      { name: "Transpacific Airway PAC-1 (Tokyo - LAX)", cat: "flight", coords: [[35.76, 140.39], [40.00, 160.00], [45.00, -175.00], [42.00, -145.00], [33.94, -118.41]] },
+      { name: "Eurasian Airway (London - Frankfurt - Dubai - Delhi)", cat: "flight", coords: [[51.47, -0.45], [50.03, 8.57], [41.01, 28.98], [25.25, 55.36], [28.56, 77.10]] }
+    ];
+
+    function initCorridorsLayer() {
+      const group = L.layerGroup();
+      WORLD_CORRIDORS.forEach(c => {
+        let color = '#38bdf8';
+        let dash = '4, 6';
+        let weight = 1.6;
+        let opacity = 0.45;
+        if (c.cat === 'ship') { color = '#f97316'; dash = '6, 8'; weight = 1.8; opacity = 0.55; }
+        else if (c.cat === 'train') { color = '#10b981'; dash = null; weight = 2.0; opacity = 0.65; }
+        else if (c.cat === 'transit') { color = '#a855f7'; dash = '3, 5'; weight = 1.8; opacity = 0.6; }
+
+        const poly = L.polyline(c.coords, {
+          color: color,
+          weight: weight,
+          opacity: opacity,
+          dashArray: dash
+        });
+        poly.bindTooltip(`<div class="font-mono text-xs font-bold text-slate-100">${c.name}</div>`, { sticky: true });
+        group.addLayer(poly);
+      });
+      return group;
+    }
+
+    corridorsLayer = initCorridorsLayer();
+    corridorsLayer.addTo(map);
+
+    const btnCorridors = document.getElementById('btnToggleCorridors');
+    if (btnCorridors) {
+      btnCorridors.addEventListener('click', () => {
+        showCorridors = !showCorridors;
+        if (showCorridors) {
+          map.addLayer(corridorsLayer);
+          btnCorridors.classList.add('border-teal-500/40', 'bg-teal-950/60', 'text-teal-300');
+          btnCorridors.classList.remove('border-slate-700', 'bg-slate-900/60', 'text-slate-400');
+        } else {
+          map.removeLayer(corridorsLayer);
+          btnCorridors.classList.remove('border-teal-500/40', 'bg-teal-950/60', 'text-teal-300');
+          btnCorridors.classList.add('border-slate-700', 'bg-slate-900/60', 'text-slate-400');
+        }
+        sound.beep(720, 0.05);
+      });
+    }
 
     // Attach high-performance HTML5 Canvas layer
     const canvas = document.createElement('canvas');
