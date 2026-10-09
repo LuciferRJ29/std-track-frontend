@@ -1077,12 +1077,52 @@
     // =========================================================================
     // 📡 WEBSOCKET & REST LIVE TELEMETRY INGESTION (HEROKU)
     // =========================================================================
+    function normalizeVehicle(v) {
+      const orig = typeof v.origin === 'object' && v.origin !== null ? v.origin : null;
+      const dest = typeof v.dest === 'object' && v.dest !== null ? v.dest : null;
+      const origCity = v.oc || (orig ? orig.city : (v.orig || 'Departure'));
+      const destCity = v.dc || (dest ? dest.city : (v.dest || 'Destination'));
+      const origCode = v.o || (orig ? orig.code : 'DEP');
+      const destCode = v.d || (dest ? dest.code : 'ARR');
+      const lat = Number(v.lat);
+      const lon = Number(v.lon);
+
+      return {
+        id: v.id,
+        callsign: v.callsign || v.id,
+        category: v.cat || v.category || 'flight',
+        operator: v.op || v.operator || 'Commercial Transport',
+        aircraft: v.ac || v.aircraft || 'Commercial Transport',
+        lat: lat,
+        lon: lon,
+        speed: Number(v.spd !== undefined ? v.spd : (v.speed || 0)),
+        altitude: Number(v.alt !== undefined ? v.alt : (v.altitude || 0)),
+        heading: Number(v.hdg !== undefined ? v.hdg : (v.heading || 0)),
+        origin: {
+          code: origCode,
+          city: origCity,
+          lat: orig ? orig.lat : (lat - 1.2),
+          lon: orig ? orig.lon : (lon - 1.2)
+        },
+        dest: {
+          code: destCode,
+          city: destCity,
+          lat: dest ? dest.lat : (lat + 1.2),
+          lon: dest ? dest.lon : (lon + 1.2)
+        },
+        status: v.st || v.status || 'Active',
+        squawk: v.sq || v.squawk || '4701',
+        transponder: v.tr || v.transponder || 'Mode-S ADS-B',
+        source: v.src || v.source || 'Live Telemetry'
+      };
+    }
+
     // Immediate REST snapshot on page load (0ms waiting)
     fetch(HEROKU_BACKEND_HTTP_URL)
       .then(res => res.json())
       .then(data => {
         if (data.vehicles && data.vehicles.length > 0) {
-          vehicles = data.vehicles;
+          vehicles = data.vehicles.map(normalizeVehicle);
           updateCounts();
           renderFleetSidebar();
           renderCanvas();
@@ -1107,7 +1147,7 @@
           try {
             const data = JSON.parse(event.data);
             if (data.vehicles && data.vehicles.length > 0) {
-              vehicles = data.vehicles;
+              vehicles = data.vehicles.map(normalizeVehicle);
               updateCounts();
               renderFleetSidebar();
               if (selectedVehicle) {
